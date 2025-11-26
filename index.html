@@ -35,12 +35,12 @@
 
         .container {
             max-width: 1281px;
-  margin: 0 auto;
-  padding: 10px;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            flex-flow: column nowrap;
+            justify-content: center;
+            align-items: center;
         }
 
         /* Header */
@@ -96,16 +96,16 @@
         /* Navigation */
         nav {
             background: white;
-  border-radius: 15px;
-  padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 0 30px rgba(129, 254, 14, 0.2);
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
-  max-width: 1000px;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(129, 254, 14, 0.2);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
         }
 
         nav button {
@@ -185,7 +185,9 @@
         }
 
         /* Forms */
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -195,7 +197,9 @@
             font-size: 0.9em;
         }
 
-        input:focus, select:focus, textarea:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: #81FE0E;
             box-shadow: 0 0 10px rgba(129, 254, 14, 0.3);
@@ -310,7 +314,7 @@
             border-radius: 10px;
             margin: 15px auto;
             display: block;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         /* Badge */
@@ -363,9 +367,17 @@
             text-align: center;
         }
 
-        .ranking-position.first { color: #FFD700; }
-        .ranking-position.second { color: #C0C0C0; }
-        .ranking-position.third { color: #CD7F32; }
+        .ranking-position.first {
+            color: #FFD700;
+        }
+
+        .ranking-position.second {
+            color: #C0C0C0;
+        }
+
+        .ranking-position.third {
+            color: #CD7F32;
+        }
 
         .ranking-info {
             flex: 1;
@@ -435,8 +447,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Responsive */
@@ -475,15 +492,15 @@
         /* User info header */
         .user-info {
             background: white;
-  padding: 15px 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 0 20px rgba(129, 254, 14, 0.2);
-  gap: 15px;
-  width: 100%;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(129, 254, 14, 0.2);
+            gap: 15px;
+            width: 100%;
         }
 
         .user-info-left {
@@ -496,7 +513,7 @@
             font-size: 1.3em;
             font-weight: 900;
         }
-        
+
         .user-info-left span {
             color: #343973;
             font-size: 0.9em;
@@ -517,17 +534,18 @@
             border-left: 4px solid #343973;
         }
 
-.hints-section div {
-    display: flex;
-    flex: column nowrap;
-    gap: 10px;
-}
+        .hints-section div {
+            display: flex;
+            flex: column nowrap;
+            gap: 10px;
+        }
 
-@media screen and (min-width: 961px) {
-    .hints-section div {
-    flex: row nowrap;;
-}
-}
+        @media screen and (min-width: 961px) {
+            .hints-section div {
+                flex: row nowrap;
+                ;
+            }
+        }
 
         .hint-item {
             padding: 10px;
@@ -536,10 +554,10 @@
             border-radius: 8px;
         }
 
-         .hint-item.locked {
+        .hint-item.locked {
             cursor: none;
             opacity: 0.5;
-         }
+        }
 
 
         /* Lockout timer */
@@ -555,8 +573,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
         }
 
         .lockout-timer h3 {
@@ -618,6 +643,7 @@
                 bottom: -100px;
                 opacity: 0;
             }
+
             to {
                 bottom: 30px;
                 opacity: 1;
@@ -686,74 +712,74 @@
         }
 
         /* Floating rules button */
-.floating-rules-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: #343973;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 50px;
-    border: none;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 1em;
-    cursor: pointer;
-    transition: all 0.3s;
-    z-index: 1000;
-}
+        .floating-rules-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #343973;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
 
-.floating-rules-btn:hover {
-    background: #81FE0E;
-    color: #000;
-    transform: translateY(-3px);
-}
+        .floating-rules-btn:hover {
+            background: #81FE0E;
+            color: #000;
+            transform: translateY(-3px);
+        }
 
-/* Rules modal */
-.rules-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
+        /* Rules modal */
+        .rules-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-.rules-modal-content {
-    background: white;
-    border-radius: 15px;
-    padding: 10px;
-    max-width: 800px;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-}
+        .rules-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 10px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
 
-.rules-modal-close {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: #ff4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.5em;
-    cursor: pointer;
-    font-weight: bold;
-}
+        .rules-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5em;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-.rules-modal-close:hover {
-    background: #cc0000;
-}
+        .rules-modal-close:hover {
+            background: #cc0000;
+        }
 
-/* Password input with eye toggle */
+        /* Password input with eye toggle */
         .password-container {
             position: relative;
             width: 100%;
@@ -844,18 +870,17 @@
 
                     <label>Mot de passe (6 chiffres)</label>
                     <div class="password-container">
-                        <input type="password" id="loginPassword" placeholder="123456" maxlength="6"
-                               inputmode="numeric" pattern="[0-9]*"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="loginPassword" placeholder="123456" maxlength="6" inputmode="numeric"
+                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                                onclick="togglePassword('loginPassword', this)">👁️</button>
+                            onclick="togglePassword('loginPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.login()">
                         🚀 Se connecter
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToChoice()">
+                        onclick="hdnApp.backToChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -880,7 +905,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToChoice()">
+                        onclick="hdnApp.backToChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -893,19 +918,18 @@
 
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
-                        <input type="password" id="soloPassword" placeholder="123456" maxlength="6"
-                               inputmode="numeric" pattern="[0-9]*"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="soloPassword" placeholder="123456" maxlength="6" inputmode="numeric"
+                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                                onclick="togglePassword('soloPassword', this)">👁️</button>
+                            onclick="togglePassword('soloPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;"
-                            onclick="hdnApp.registerSolo()">
+                        onclick="hdnApp.registerSolo()">
                         ✅ S'inscrire Solo
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToRegisterChoice()">
+                        onclick="hdnApp.backToRegisterChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -930,7 +954,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToRegisterChoice()">
+                        onclick="hdnApp.backToRegisterChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -946,19 +970,18 @@
 
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
-                        <input type="password" id="teamPassword" placeholder="123456" maxlength="6"
-                               inputmode="numeric" pattern="[0-9]*"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="teamPassword" placeholder="123456" maxlength="6" inputmode="numeric"
+                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                                onclick="togglePassword('teamPassword', this)">👁️</button>
+                            onclick="togglePassword('teamPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;"
-                            onclick="hdnApp.createTeam()">
+                        onclick="hdnApp.createTeam()">
                         🎯 Créer l'équipe
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToTeamAction()">
+                        onclick="hdnApp.backToTeamAction()">
                         ← Retour
                     </button>
                 </div>
@@ -975,17 +998,17 @@
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
                         <input type="password" id="joincreateTeamPassword" placeholder="123456" maxlength="6"
-                               inputmode="numeric" pattern="[0-9]*"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                            inputmode="numeric" pattern="[0-9]*"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                                onclick="togglePassword('joincreateTeamPassword', this)">👁️</button>
+                            onclick="togglePassword('joincreateTeamPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.joinTeam()">
                         🚀 Rejoindre
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                            onclick="hdnApp.backToTeamAction()">
+                        onclick="hdnApp.backToTeamAction()">
                         ← Retour
                     </button>
                 </div>
@@ -996,6 +1019,20 @@
         <div class="section" id="home-section">
             <div class="card">
                 <h2>🏠 Tableau de bord</h2>
+
+                <!-- Anti-IA Block Message (hidden by default) -->
+                <div id="antiIaBlockMessage"
+                    style="display: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="color: white; margin: 0 0 10px 0;">🤖 Demander les réponses ne te donnera pas de mérite à
+                        être premier !</h3>
+                    <p style="color: white; margin: 0 0 15px 0;">Accès aux énigmes bloqué</p>
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; display: inline-block;">
+                        <p style="color: white; margin: 0; font-size: 0.9em;">Temps restant</p>
+                        <h2 id="antiIaCountdown" style="color: #81FE0E; margin: 5px 0 0 0; font-size: 2em;">--:--</h2>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">L'énigme a été
+                        validée, mais tu as reçu une pénalité de -10 points.</p>
+                </div>
 
                 <!-- Countdown Timer -->
                 <div class="timer" id="countdownTimer">
@@ -1016,6 +1053,15 @@
                         <h3 id="userRank">-</h3>
                         <p>Classement</p>
                     </div>
+                </div>
+
+                <!-- Profile Settings -->
+                <h3 style="margin-top: 30px;">⚙️ Mon Profil</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="hdnApp.showEditPseudoModal()">✏️ Modifier mon
+                        pseudo</button>
+                    <button class="btn btn-primary" id="editTeamBtn" onclick="hdnApp.showEditTeamModal()"
+                        style="display: none;">👥 Modifier le nom d'équipe</button>
                 </div>
             </div>
         </div>
@@ -1042,159 +1088,84 @@
                 <h2>📋 Règles du Jeu</h2>
 
                 <h3>🎯 Objectif</h3>
-                <p>Résoudre un maximum d'énigmes pour accumuler des points et grimper dans le classement !</p>
+                <p>Résous un maximum d'énigmes et scanne les QR Codes pour accumuler des points et grimper dans le
+                    classement !</p>
 
-                <h3>❌ Fortement déconseillé</h3>
-                <p>Utiliser l'IA pour résoudre les énigmes. Les énigmes viennent de mon cerveau, alors s'il vous plaît,
-                    essayez de vous torturer l'esprit pour y arriver.</p>
-
-                <h3>🎮 Comment jouer</h3>
+                <h3>⏰ Horaires de jeu</h3>
                 <ul style="margin-left: 20px; line-height: 2;">
-                    <li>Résolvez l'énigme et soumettez votre réponse</li>
-                    <li>La soumission des éngimes se fait uniquement entre 12h et 14h en semaine. (Si l'envie vous
-                        prends, vous pouvez jouer le weekend sans problème)</li>
-                    <li>Une fois validée, l'emplacement du QR code est révélé</li>
-                    <li>Scannez le QR code pour gagner vos points !</li>
+                    <li><strong>En semaine :</strong> 12h-14h (pause déj) et 18h-8h (soir/nuit)</li>
+                    <li><strong>Le weekend :</strong> 24h/24, pas de restriction !</li>
                 </ul>
 
-                <h3>💎 Système de Points</h3>
+                <h3>🎮 Comment jouer ?</h3>
                 <ul style="margin-left: 20px; line-height: 2;">
-                    <li><strong>1ère place :</strong> 200 points 🥇</li>
-                    <li><strong>2ème place :</strong> 150 points 🥈</li>
-                    <li><strong>3ème place :</strong> 100 points 🥉</li>
-                    <li><strong>4ème+ :</strong> 50 points</li>
-                    <li>⚠️ Les points sont calculés AU MOMENT où tu scannes le QR code !</li>
-                    <li>💡 Tu ne connais tes points qu'APRÈS avoir scanné le QR</li>
+                    <li><strong>Étape 1 :</strong> Résous l'énigme et soumets ta réponse</li>
+                    <li><strong>Étape 2 :</strong> Clique sur "Je suis prêt" pour révéler l'emplacement du QR Code</li>
+                    <li><strong>Étape 3 :</strong> Fonce scanner le QR Code pour gagner tes points !</li>
+                </ul>
+                <p style="color: #666; font-style: italic; margin-top: 10px;">⚠️ Le chrono bonus démarre dès que tu
+                    cliques sur "Je suis prêt", alors fais-le quand tu es vraiment prêt à chercher !</p>
+
+                <h3>💎 Points par position</h3>
+                <p>Le classement se fait selon l'ordre de scan du QR Code :</p>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>🥇 <strong>1er à scanner :</strong> 125 points</li>
+                    <li>🥈 <strong>2ème :</strong> 100 points</li>
+                    <li>🥉 <strong>3ème :</strong> 75 points</li>
+                    <li>🏅 <strong>4ème et + :</strong> 50 points</li>
+                </ul>
+
+                <h3>⏱️ Bonus de rapidité</h3>
+                <p>Plus tu trouves le QR Code vite après avoir cliqué "Je suis prêt", plus tu gagnes :</p>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>⚡ <strong>Moins de 20 min :</strong> +20 points</li>
+                    <li>🔥 <strong>Moins de 40 min :</strong> +10 points</li>
+                    <li>✨ <strong>Moins de 60 min :</strong> +5 points</li>
+                    <li>😅 <strong>Plus de 60 min :</strong> pas de bonus</li>
                 </ul>
 
                 <h3>💡 Indices</h3>
+                <p>Besoin d'aide ? 3 indices sont disponibles par énigme, mais ils coûtent des points :</p>
                 <ul style="margin-left: 20px; line-height: 2;">
-                    <li>3 indices disponibles par énigme</li>
-                    <li>Le 1er indice coûte <strong>5 points</strong></li>
-                    <li>Le 2ème indice coûte <strong>15 points</strong></li>
-                    <li>Le 3ème indice coûte <strong>30 points</strong></li>
-                    <li>Les indices se débloquent progressivement</li>
+                    <li>Indice 1 : <strong>-5 points</strong></li>
+                    <li>Indice 2 : <strong>-15 points</strong></li>
+                    <li>Indice 3 : <strong>-30 points</strong></li>
                 </ul>
+                <p style="color: #666; font-style: italic;">Les indices se débloquent dans l'ordre (il faut prendre le 1
+                    avant le 2, etc.)</p>
 
-                <h3>🔒 Lockout</h3>
+                <h3>🔒 Mauvaises réponses</h3>
                 <ul style="margin-left: 20px; line-height: 2;">
-                    <li>Après <strong>3 mauvaises réponses</strong>, l'énigme est bloquée</li>
-                    <li>Temps de blocage : <strong>15 minutes</strong></li>
-                    <li>Je vous conseil donc de bien réfléchir avant de soumettre votre réponse</li>
+                    <li>Tu as <strong>3 essais</strong> par énigme</li>
+                    <li>Après 3 erreurs → blocage de <strong>15 minutes</strong></li>
+                    <li>Réfléchis bien avant de valider !</li>
                 </ul>
 
                 <h3>👥 Mode Équipe</h3>
                 <ul style="margin-left: 20px; line-height: 2;">
-                    <li>Les points sont partagés entre les membres</li>
-                    <li>Si un membre de l'équipe valide l'énigme, elle se valide aussi pour les autres membres</li>
-                    <li>De la même façon, si un membre de l'équipe demande un indice, il s'affiche pour tous les membres
-                    </li>
-                    <li>Vous pouvez voir les performances individuelles dans vos statistiques de compte</li>
+                    <li>Les points sont partagés : si l'équipe gagne 125 pts, chaque membre a 125 pts</li>
+                    <li>Si un membre valide l'énigme, c'est validé pour toute l'équipe</li>
+                    <li>Pareil pour les indices : un membre débloque = tout le monde voit</li>
                 </ul>
 
-                <h3>📱 QR Codes</h3>
-                <ul style="margin-left: 20px; line-height: 2;">
-                    <li>Après validation de la réponse, l'emplacement du QR est révélé</li>
-                    <li>Trouvez et scannez le QR code pour gagner vos points (Si vous trouvez un autre QR Code, inutile
-                        de le scanner, c'est un QR code unique par énigme 😋)</li>
-                    <li>C'est une course ! Le premier à scanner gagne le plus de points !</li>
-                </ul>
+                <h3>🤖 A propos de l'ia...</h3>
+                <p>Les énigmes viennent de mon cerveau, alors essayez de vous torturer l'esprit pour y arriver !
+                    C'est plus fun de trouver par soi-même, et demander les réponses ne te donnera aucun mérite à être
+                    premier 😉</p>
+
+                <h3>🤡 Et si je demande les réponses à quelqu'un pour rattraper mon retard ???</h3>
+                <p>Honnêtement je vous déconseille, ça va juste vous saouler et vous allez arrêter de jouer 😈</p>
 
                 <div class="alert alert-info" style="margin-top: 20px;">
-                    <strong>📅 Dates importantes :</strong><br>
+                    <strong>📅 Dates de l'événement :</strong><br>
                     • Début : 25 novembre 2025<br>
-                    • Fin : 08 décembre 2025<br>
+                    • Fin : 08 décembre 2025
                 </div>
             </div>
         </div>
 
-        <!-- ADMIN SECTION -->
-        <div class="section" id="admin-section">
-            <div class="card">
-                <h2>⚙️ Administration</h2>
-
-                <h3>📊 Statistiques</h3>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <h3 id="adminTotalPlayers">0</h3>
-                        <p>Joueurs</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3 id="adminTotalEnigmas">0</h3>
-                        <p>Énigmes</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3 id="adminPendingValidations">0</h3>
-                        <p>En attente</p>
-                    </div>
-                </div>
-
-                <h3>➕ Créer une Énigme</h3>
-
-                <label>Titre *</label>
-                <input type="text" id="enigmaTitle" placeholder="Titre de l'énigme" />
-
-                <label>Description *</label>
-                <textarea id="enigmaDescription" rows="4" placeholder="Énoncé de l'énigme"></textarea>
-
-                <label>Image (URL optionnelle)</label>
-                <input type="url" id="enigmaImageUrl" placeholder="https://example.com/image.jpg" />
-                <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                    URL de l'image à afficher avec l'énigme (optionnel)
-                </p>
-
-                <label>Réponse *</label>
-                <input type="text" id="enigmaAnswer" placeholder="Réponse correcte" />
-
-                <label>Emplacement du QR Code *</label>
-                <input type="text" id="enigmaLocation" placeholder="Ex: Près de la fontaine, 2ème étage..." />
-
-                <label>Type de validation</label>
-                <select id="enigmaValidation">
-                    <option value="auto">Automatique</option>
-                    <option value="manual">Manuelle</option>
-                </select>
-
-                <h3>💡 Indices (optionnels)</h3>
-                <label>Indice 1</label>
-                <textarea id="enigmaHint1" rows="2" placeholder="Premier indice (-5 points)"></textarea>
-
-                <label>Indice 2</label>
-                <textarea id="enigmaHint2" rows="2" placeholder="Deuxième indice (-15 points)"></textarea>
-
-                <label>Indice 3</label>
-                <textarea id="enigmaHint3" rows="2" placeholder="Troisième indice (-30 points)"></textarea>
-
-                <h3>📅 Publication</h3>
-                <label>
-                    <input type="checkbox" id="enigmaPublished" style="width: auto; margin-right: 10px;" />
-                    Publier immédiatement
-                </label>
-
-                <div id="schedulePublishDiv" style="margin-top: 15px;">
-                    <label>📅 Programmer la publication (optionnel)</label>
-                    <input type="datetime-local" id="enigmaSchedule" />
-                    <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                        Si rempli, l'énigme sera automatiquement publiée à cette date/heure
-                    </p>
-                </div>
-
-                <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.createEnigma()">
-                    ✅ Créer l'énigme
-                </button>
-
-                <h3 style="margin-top: 30px;">📋 Mes Énigmes</h3>
-                <div id="adminEnigmasList"></div>
-
-                <h3 style="margin-top: 30px;">✅ Validations en attente</h3>
-                <div id="pendingValidationsList"></div>
-
-                <h3 style="margin-top: 30px;">💾 Export des données</h3>
-                <button class="btn btn-primary" style="width: 100%;" onclick="hdnApp.exportData()">
-                    📥 Exporter toutes les données
-                </button>
-            </div>
-        </div>
+        <!-- ADMIN SECTION - Content injected dynamically for admins only -->
+        <div class="section" id="admin-section"></div>
     </div>
 
     <script>
@@ -1268,26 +1239,63 @@
                 return localDate.toISOString();
             },
 
-            // Check if enigmas are accessible (12h-14h weekdays, 24/7 weekend)
-            isEnigmaAccessAllowed() {
+            // Check if enigmas are accessible
+            // Semaine: 12h-14h ET 18h-8h / Weekend: 24/7
+            async isEnigmaAccessAllowed() {
                 // Admin can always access
                 if (this.currentUser?.is_admin) return true;
+
+                // Test accounts can always access
+                if (this.currentUser?.is_test) return true;
+
+                // Check if player is blocked (anti-IA penalty)
+                if (this.currentUser?.id) {
+                    const { data: player } = await supabase
+                        .from('players')
+                        .select('enigmas_blocked_until')
+                        .eq('id', this.currentUser.id)
+                        .maybeSingle();
+
+                    if (player?.enigmas_blocked_until) {
+                        const blockEnd = new Date(player.enigmas_blocked_until);
+                        const now = new Date();
+                        if (now < blockEnd) {
+                            const remainingMin = Math.ceil((blockEnd - now) / 60000);
+                            this.enigmaBlockMessage = `🔒 Accès aux énigmes bloqué encore ${remainingMin} min`;
+                            return false;
+                        }
+                    }
+                }
 
                 const now = new Date();
                 const dayOfWeek = now.getDay();
                 const hours = now.getHours();
 
-                // Weekend = toujours accessible
-                // if (dayOfWeek === 0 || dayOfWeek === 6) {
-                //     return true;
-                // }
+                // Weekend (samedi=6, dimanche=0) = toujours accessible
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    return true;
+                }
 
-                // Semaine = 12h-14h uniquement
-                return hours >= 12 && hours < 22;
+                // Semaine = 12h-14h OU 18h-8h (soir/nuit)
+                // 12h-14h
+                if (hours >= 12 && hours < 14) {
+                    return true;
+                }
+                // 18h-23h59
+                if (hours >= 18) {
+                    return true;
+                }
+                // 0h-8h
+                if (hours < 8) {
+                    return true;
+                }
+
+                this.enigmaBlockMessage = '⏰ Les énigmes sont accessibles entre 12h-14h et 18h-8h en semaine, et 24h/24 le weekend !';
+                return false;
             },
 
             // Update enigma button state
-            updateEnigmaButtonState() {
+            async updateEnigmaButtonState() {
 
                 const enigmaBtn = document.getElementById('enigmaNavBtn');
                 console.log('Bouton trouvé:', enigmaBtn);
@@ -1297,7 +1305,7 @@
                     return;
                 }
 
-                const isAllowed = this.isEnigmaAccessAllowed();
+                const isAllowed = await this.isEnigmaAccessAllowed();
                 console.log('Accès autorisé:', isAllowed);
 
                 if (isAllowed) {
@@ -1314,10 +1322,11 @@
                     enigmaBtn.style.opacity = '0.5';
                     enigmaBtn.style.cursor = 'not-allowed';
                     enigmaBtn.style.pointerEvents = 'auto';
+                    const blockMsg = this.enigmaBlockMessage || '⏰ Les énigmes sont accessibles entre 12h-14h et 18h-8h en semaine, et 24h/24 le weekend !';
                     enigmaBtn.onclick = (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        showToast('⏰ Les énigmes sont accessibles uniquement entre 12h et 14h en semaine !', 'warning');
+                        showToast(blockMsg, 'warning');
                     };
                 }
 
@@ -1736,10 +1745,10 @@
                 if (!this.currentUser) return;
 
                 try {
-                    // Reload fresh user data (without password)
+                    // Reload fresh user data (without password) - include enigmas_blocked_until
                     const { data: player } = await supabase
                         .from('players')
-                        .select('id, pseudo, type, points, team_id, is_admin, is_test')
+                        .select('id, pseudo, type, points, team_id, is_admin, is_test, enigmas_blocked_until')
                         .eq('id', this.currentUser.id)
                         .maybeSingle();
 
@@ -1752,16 +1761,25 @@
                     document.getElementById('userPseudo').textContent = this.currentUser.pseudo;
                     document.getElementById('userPoints').textContent = this.currentUser.points || 0;
 
+                    // Check and display anti-IA block message
+                    await this.checkAndDisplayAntiIaBlock();
+
                     // Load team info if applicable (without sensitive data)
                     if (this.currentUser.team_id) {
                         const { data: team } = await supabase
                             .from('teams')
-                            .select('id, name, code, points')
+                            .select('id, name, code, points, leader')
                             .eq('id', this.currentUser.team_id)
                             .maybeSingle();
 
                         if (team) {
                             document.getElementById('userTeamInfo').textContent = `Équipe: ${team.name} - Code: ${team.code}`;
+
+                            // Show edit team button if user is leader
+                            const editTeamBtn = document.getElementById('editTeamBtn');
+                            if (editTeamBtn && team.leader === this.currentUser.id) {
+                                editTeamBtn.style.display = 'inline-block';
+                            }
                         }
                     } else {
                         document.getElementById('userTeamInfo').textContent = 'Solo';
@@ -1787,6 +1805,68 @@
 
                 } catch (error) {
                     console.error('Error loading user data:', error);
+                }
+            },
+
+            // Anti-IA block display with countdown
+            antiIaCountdownInterval: null,
+
+            async checkAndDisplayAntiIaBlock() {
+                const blockMessage = document.getElementById('antiIaBlockMessage');
+                const countdownEl = document.getElementById('antiIaCountdown');
+
+                if (!blockMessage || !countdownEl) return;
+
+                // Clear existing interval
+                if (this.antiIaCountdownInterval) {
+                    clearInterval(this.antiIaCountdownInterval);
+                    this.antiIaCountdownInterval = null;
+                }
+
+                // Check if blocked
+                if (this.currentUser?.enigmas_blocked_until) {
+                    const blockEnd = new Date(this.currentUser.enigmas_blocked_until);
+                    const now = new Date();
+
+                    if (now < blockEnd) {
+                        // Still blocked - show message and start countdown
+                        blockMessage.style.display = 'block';
+
+                        const updateCountdown = () => {
+                            const now = new Date();
+                            const remaining = blockEnd - now;
+
+                            if (remaining <= 0) {
+                                // Block expired
+                                blockMessage.style.display = 'none';
+                                clearInterval(this.antiIaCountdownInterval);
+                                this.antiIaCountdownInterval = null;
+                                // Clear the block in database
+                                supabase
+                                    .from('players')
+                                    .update({ enigmas_blocked_until: null })
+                                    .eq('id', this.currentUser.id)
+                                    .then(() => {
+                                        this.currentUser.enigmas_blocked_until = null;
+                                    });
+                                return;
+                            }
+
+                            const minutes = Math.floor(remaining / 60000);
+                            const seconds = Math.floor((remaining % 60000) / 1000);
+                            countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        };
+
+                        // Update immediately and then every second
+                        updateCountdown();
+                        this.antiIaCountdownInterval = setInterval(updateCountdown, 1000);
+                    } else {
+                        // Block expired
+                        blockMessage.style.display = 'none';
+                    }
+                } else {
+                    // Not blocked
+                    blockMessage.style.display = 'none';
                 }
             },
 
@@ -1827,9 +1907,11 @@
                 document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('mainNav').classList.remove('hidden');
 
-                // Show admin button if admin
+                // Show admin button and inject admin template if admin
                 if (this.currentUser.is_admin) {
                     document.getElementById('adminNavBtn').classList.remove('hidden');
+                    // Inject admin template dynamically
+                    document.getElementById('admin-section').innerHTML = this.getAdminTemplate();
                     // Hide floating rules button
                     const floatingRulesBtn = document.querySelector('.floating-rules-btn');
                     if (floatingRulesBtn) {
@@ -1841,6 +1923,256 @@
                 this.showSection('home');
             },
 
+            // Admin template - hidden from View Source for non-admins
+            getAdminTemplate() {
+                return `
+                <div class="card">
+                    <h2>⚙️ Administration</h2>
+
+                    <h3>📊 Statistiques</h3>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <h3 id="adminTotalPlayers">0</h3>
+                            <p>Joueurs</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3 id="adminTotalEnigmas">0</h3>
+                            <p>Énigmes</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3 id="adminPendingValidations">0</h3>
+                            <p>En attente</p>
+                        </div>
+                    </div>
+
+                    <h3>➕ Créer une Énigme</h3>
+
+                    <label>Titre *</label>
+                    <input type="text" id="enigmaTitle" placeholder="Titre de l'énigme" />
+
+                    <label>Description *</label>
+                    <textarea id="enigmaDescription" rows="4" placeholder="Énoncé de l'énigme"></textarea>
+
+                    <label>Image (URL optionnelle)</label>
+                    <input type="url" id="enigmaImageUrl" placeholder="https://example.com/image.jpg" />
+                    <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                        URL de l'image à afficher avec l'énigme (optionnel)
+                    </p>
+
+                    <label>Réponse *</label>
+                    <input type="text" id="enigmaAnswer" placeholder="Réponse correcte" />
+
+                    <label>Emplacement du QR Code *</label>
+                    <input type="text" id="enigmaLocation" placeholder="Ex: Près de la fontaine, 2ème étage..." />
+
+                    <label>Type de validation</label>
+                    <select id="enigmaValidation">
+                        <option value="auto">Automatique</option>
+                        <option value="manual">Manuelle</option>
+                    </select>
+
+                    <h3>💡 Indices (optionnels)</h3>
+                    <label>Indice 1</label>
+                    <textarea id="enigmaHint1" rows="2" placeholder="Premier indice (-5 points)"></textarea>
+
+                    <label>Indice 2</label>
+                    <textarea id="enigmaHint2" rows="2" placeholder="Deuxième indice (-15 points)"></textarea>
+
+                    <label>Indice 3</label>
+                    <textarea id="enigmaHint3" rows="2" placeholder="Troisième indice (-30 points)"></textarea>
+
+                    <h3>📅 Publication</h3>
+                    <label>
+                        <input type="checkbox" id="enigmaPublished" style="width: auto; margin-right: 10px;" />
+                        Publier immédiatement
+                    </label>
+
+                    <div id="schedulePublishDiv" style="margin-top: 15px;">
+                        <label>📅 Programmer la publication (optionnel)</label>
+                        <input type="datetime-local" id="enigmaSchedule" />
+                        <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                            Si rempli, l'énigme sera automatiquement publiée à cette date/heure
+                        </p>
+                    </div>
+
+                    <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.createEnigma()">
+                        ✅ Créer l'énigme
+                    </button>
+
+                    <h3 style="margin-top: 30px;">📋 Mes Énigmes</h3>
+                    <div id="adminEnigmasList"></div>
+
+                    <h3 style="margin-top: 30px;">✅ Validations en attente</h3>
+                    <div id="pendingValidationsList"></div>
+
+                    <h3 style="margin-top: 30px;">💾 Export des données</h3>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="hdnApp.exportData()">
+                        📥 Exporter toutes les données
+                    </button>
+                </div>
+                `;
+            },
+
+            // ========== EDIT PSEUDO ==========
+
+            showEditPseudoModal() {
+                const modal = document.createElement('div');
+                modal.id = 'editPseudoModal';
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 100%;">
+                        <h3 style="color: #343973; margin-bottom: 20px;">✏️ Modifier mon pseudo</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Pseudo actuel : <strong>${this.currentUser.pseudo}</strong></p>
+                        <input type="text" id="newPseudoInput" placeholder="Nouveau pseudo" style="width: 100%; padding: 12px; border: 2px solid #343973; border-radius: 8px; font-family: 'Orbitron', sans-serif; margin-bottom: 15px;">
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-danger" onclick="hdnApp.closeEditPseudoModal()">Annuler</button>
+                            <button class="btn btn-success" onclick="hdnApp.savePseudo()">Enregistrer</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.getElementById('newPseudoInput').focus();
+            },
+
+            closeEditPseudoModal() {
+                const modal = document.getElementById('editPseudoModal');
+                if (modal) modal.remove();
+            },
+
+            async savePseudo() {
+                const newPseudo = document.getElementById('newPseudoInput').value.trim();
+
+                if (!newPseudo) {
+                    showToast('❌ Le pseudo ne peut pas être vide !', 'error');
+                    return;
+                }
+
+                if (newPseudo === this.currentUser.pseudo) {
+                    showToast('⚠️ C\'est déjà ton pseudo actuel !', 'warning');
+                    return;
+                }
+
+                try {
+                    // Check if pseudo already exists
+                    const { data: existing } = await supabase
+                        .from('players')
+                        .select('id')
+                        .eq('pseudo', newPseudo)
+                        .neq('id', this.currentUser.id)
+                        .maybeSingle();
+
+                    if (existing) {
+                        showToast('❌ Ce pseudo est déjà utilisé !', 'error');
+                        return;
+                    }
+
+                    // Update pseudo
+                    const { error } = await supabase
+                        .from('players')
+                        .update({ pseudo: newPseudo })
+                        .eq('id', this.currentUser.id);
+
+                    if (error) throw error;
+
+                    showToast('✅ Pseudo modifié avec succès !', 'success');
+                    this.closeEditPseudoModal();
+                    await this.loadUserData();
+
+                } catch (error) {
+                    console.error('Error updating pseudo:', error);
+                    showToast('❌ Erreur lors de la modification : ' + error.message, 'error');
+                }
+            },
+
+            // ========== EDIT TEAM NAME ==========
+
+            showEditTeamModal() {
+                if (!this.currentUser.team_id) {
+                    showToast('❌ Tu n\'es pas dans une équipe !', 'error');
+                    return;
+                }
+
+                // Get current team name
+                supabase
+                    .from('teams')
+                    .select('name, leader')
+                    .eq('id', this.currentUser.team_id)
+                    .single()
+                    .then(({ data: team, error }) => {
+                        if (error || !team) {
+                            showToast('❌ Équipe non trouvée !', 'error');
+                            return;
+                        }
+
+                        if (team.leader !== this.currentUser.id) {
+                            showToast('❌ Seul le leader peut modifier le nom de l\'équipe !', 'error');
+                            return;
+                        }
+
+                        const modal = document.createElement('div');
+                        modal.id = 'editTeamModal';
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+                        modal.innerHTML = `
+                            <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 100%;">
+                                <h3 style="color: #343973; margin-bottom: 20px;">👥 Modifier le nom d'équipe</h3>
+                                <p style="color: #666; margin-bottom: 15px;">Nom actuel : <strong>${team.name}</strong></p>
+                                <input type="text" id="newTeamNameInput" placeholder="Nouveau nom d'équipe" style="width: 100%; padding: 12px; border: 2px solid #343973; border-radius: 8px; font-family: 'Orbitron', sans-serif; margin-bottom: 15px;">
+                                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button class="btn btn-danger" onclick="hdnApp.closeEditTeamModal()">Annuler</button>
+                                    <button class="btn btn-success" onclick="hdnApp.saveTeamName()">Enregistrer</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                        document.getElementById('newTeamNameInput').focus();
+                    });
+            },
+
+            closeEditTeamModal() {
+                const modal = document.getElementById('editTeamModal');
+                if (modal) modal.remove();
+            },
+
+            async saveTeamName() {
+                const newName = document.getElementById('newTeamNameInput').value.trim();
+
+                if (!newName) {
+                    showToast('❌ Le nom d\'équipe ne peut pas être vide !', 'error');
+                    return;
+                }
+
+                try {
+                    // Check if team name already exists
+                    const { data: existing } = await supabase
+                        .from('teams')
+                        .select('id')
+                        .eq('name', newName)
+                        .neq('id', this.currentUser.team_id)
+                        .maybeSingle();
+
+                    if (existing) {
+                        showToast('❌ Ce nom d\'équipe est déjà utilisé !', 'error');
+                        return;
+                    }
+
+                    // Update team name
+                    const { error } = await supabase
+                        .from('teams')
+                        .update({ name: newName })
+                        .eq('id', this.currentUser.team_id);
+
+                    if (error) throw error;
+
+                    showToast('✅ Nom d\'équipe modifié avec succès !', 'success');
+                    this.closeEditTeamModal();
+                    await this.loadUserData();
+
+                } catch (error) {
+                    console.error('Error updating team name:', error);
+                    showToast('❌ Erreur lors de la modification : ' + error.message, 'error');
+                }
+            },
+
             logout() {
                 if (confirm('Veux-tu vraiment te déconnecter ?')) {
                     localStorage.removeItem('hdnCurrentUser');
@@ -1850,11 +2182,15 @@
 
             // ========== NAVIGATION ==========
 
-            showSection(sectionName) {
+            async showSection(sectionName) {
                 // Check enigma access
-                if (sectionName === 'enigmes' && !this.isEnigmaAccessAllowed()) {
-                    showToast('⏰ En semaine les énigmes sont accessibles uniquement entre 12h et 14h !', 'warning');
-                    return;
+                if (sectionName === 'enigmes') {
+                    const isAllowed = await this.isEnigmaAccessAllowed();
+                    if (!isAllowed) {
+                        const blockMsg = this.enigmaBlockMessage || '⏰ Les énigmes sont accessibles entre 12h-14h et 18h-8h en semaine, et 24h/24 le weekend !';
+                        showToast(blockMsg, 'warning');
+                        return;
+                    }
                 }
 
                 // Hide all sections
@@ -2015,15 +2351,69 @@
                         if (progress && progress.solved) {
                             content += `<div class="alert alert-success">✅ Énigme résolue !</div>`;
 
-                            // QR Code section
+                            // QR Code section with "Je suis prêt" flow
                             if (enigma.qr_secret) {
-                                content += `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>`;
-
                                 if (progress.qr_scanned) {
+                                    // Already scanned
                                     content += `<div class="alert alert-success">✅ QR Code scanné ! +${progress.points_earned || 0} points</div>`;
+                                    content += `<div class="alert alert-info">📍 <strong>Emplacement :</strong> ${enigma.location}</div>`;
+                                } else if (progress.qr_hunt_started_at) {
+                                    // Hunt started - show location + timer + scanner
+                                    const huntStarted = new Date(progress.qr_hunt_started_at);
+                                    const now = new Date();
+                                    const elapsedMs = now - huntStarted;
+                                    const elapsedMin = Math.floor(elapsedMs / 60000);
+                                    const elapsedSec = Math.floor((elapsedMs % 60000) / 1000);
+
+                                    // Calculate current bonus
+                                    let currentBonus = 0;
+                                    let bonusText = '';
+                                    if (elapsedMin < 20) {
+                                        currentBonus = 20;
+                                        bonusText = '🔥 +20 pts';
+                                    } else if (elapsedMin < 40) {
+                                        currentBonus = 10;
+                                        bonusText = '⚡ +10 pts';
+                                    } else if (elapsedMin < 60) {
+                                        currentBonus = 5;
+                                        bonusText = '✨ +5 pts';
+                                    } else {
+                                        bonusText = '⏰ Pas de bonus';
+                                    }
+
+                                    content += `
+                                        <div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>
+                                        <div style="background: #f0f9ff; border: 2px solid #343973; border-radius: 10px; padding: 15px; margin: 15px 0; text-align: center;">
+                                            <p style="margin: 0 0 10px 0; font-size: 1.1em;">⏱️ Temps écoulé : <strong id="qrTimer-${enigma.id}">${elapsedMin}:${elapsedSec.toString().padStart(2, '0')}</strong></p>
+                                            <p style="margin: 0; font-size: 1.2em; color: ${currentBonus > 0 ? '#81FE0E' : '#ff4444'};">Bonus actuel : <strong id="qrBonus-${enigma.id}">${bonusText}</strong></p>
+                                        </div>
+                                        <button class="btn btn-primary" style="width: 100%;" onclick="hdnApp.openQRScanner(${enigma.id})">📱 Scanner le QR Code</button>
+                                    `;
+
+                                    // Start live timer update
+                                    this.startQRTimer(enigma.id, huntStarted);
                                 } else {
-                                    content += `<div class="alert alert-warning">⚠️ Scanne le QR code pour gagner tes points !</div>`;
-                                    content += `<button class="btn btn-primary" onclick="hdnApp.openQRScanner(${enigma.id})">📱 Scanner le QR Code</button>`;
+                                    // Need to click "Je suis prêt" - OR old system (backward compatible)
+                                    // Check if this is an old progress without qr_hunt_started_at field
+                                    // For backward compatibility: if solved_at exists but no qr_hunt_started_at, show scanner directly
+                                    if (progress.solved_at && !progress.hasOwnProperty('qr_hunt_started_at')) {
+                                        // Old system - show scanner directly for backward compatibility
+                                        content += `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>`;
+                                        content += `<div class="alert alert-warning">⚠️ Scanne le QR code pour gagner tes points !</div>`;
+                                        content += `<button class="btn btn-primary" onclick="hdnApp.openQRScanner(${enigma.id})">📱 Scanner le QR Code</button>`;
+                                    } else {
+                                        // New system - show "Je suis prêt" button
+                                        content += `
+                                            <div style="background: linear-gradient(135deg, #343973, #4a5193); border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center;">
+                                                <button class="btn btn-success" style="font-size: 1.2em; padding: 15px 30px;" onclick="hdnApp.startQRHunt(${enigma.id})">
+                                                    🏃 Je suis prêt à chercher le QR Code !
+                                                </button>
+                                                <p style="color: white; margin: 15px 0 0 0; font-size: 0.9em;">
+                                                    ⚠️ Attention : le chrono bonus démarre dès que tu appuies !
+                                                </p>
+                                            </div>
+                                        `;
+                                    }
                                 }
                             }
                         } else if (!lockStatus.locked) {
@@ -2151,7 +2541,8 @@
                             lockout_count: 0,
                             qr_scanned: false,
                             solved: false,
-                            points_earned: 0
+                            points_earned: 0,
+                            started_at: new Date().toISOString()
                         }])
                         .select()
                         .single();
@@ -2332,23 +2723,94 @@
                     } else {
                         // Auto validation
                         if (isCorrect) {
-                            // Mark as solved but DON'T calculate or award points yet
+                            // Anti-IA detection: correct answer in less than 10 minutes
+                            const progressCreated = new Date(progress.started_at || progress.created_at);
+                            const now = new Date();
+                            const elapsedMin = (now - progressCreated) / 60000;
+
+                            let antiIaPenalty = false;
+                            if (elapsedMin < 10 && !this.currentUser.is_admin && !this.currentUser.is_test) {
+                                antiIaPenalty = true;
+
+                                // Block access to all enigmas for 10 minutes
+                                const blockUntil = new Date();
+                                blockUntil.setMinutes(blockUntil.getMinutes() + 10);
+
+                                if (this.currentUser.team_id) {
+                                    // Block ALL team members
+                                    await supabase
+                                        .from('players')
+                                        .update({ enigmas_blocked_until: blockUntil.toISOString() })
+                                        .eq('team_id', this.currentUser.team_id);
+
+                                    // Deduct 10 points from team
+                                    const { data: team } = await supabase
+                                        .from('teams')
+                                        .select('points')
+                                        .eq('id', this.currentUser.team_id)
+                                        .maybeSingle();
+
+                                    if (team) {
+                                        await supabase
+                                            .from('teams')
+                                            .update({ points: team.points - 10 })
+                                            .eq('id', this.currentUser.team_id);
+                                    }
+
+                                    // Update points for all team members too
+                                    const { data: teamMembers } = await supabase
+                                        .from('players')
+                                        .select('id, points')
+                                        .eq('team_id', this.currentUser.team_id);
+
+                                    if (teamMembers) {
+                                        for (const member of teamMembers) {
+                                            await supabase
+                                                .from('players')
+                                                .update({ points: member.points - 10 })
+                                                .eq('id', member.id);
+                                        }
+                                    }
+                                } else {
+                                    // Solo player - just block this player
+                                    await supabase
+                                        .from('players')
+                                        .update({ enigmas_blocked_until: blockUntil.toISOString() })
+                                        .eq('id', this.currentUser.id);
+
+                                    // Deduct 10 points
+                                    const newPoints = this.currentUser.points - 10;
+                                    await supabase
+                                        .from('players')
+                                        .update({ points: newPoints })
+                                        .eq('id', this.currentUser.id);
+                                }
+                            }
+
+                            // Mark as solved (even with penalty)
                             await this.updateProgress(progress.id, {
                                 solved: true,
                                 solved_at: new Date().toISOString(),
                                 points_earned: 0 // Will be calculated at QR scan
                             });
 
-                            showToast(`🎉 Bonne réponse ! Va scanner le QR code pour gagner tes points !`, 'success');
-                            await this.loadEnigmes();
-                            await this.loadUserData();
+                            if (antiIaPenalty) {
+                                // Redirect to home with penalty message
+                                await this.loadUserData();
+                                this.showSection('home');
+                                showToast(`🤖 Demander les réponses ne te donnera pas de mérite à être premier !\n\n-10 points\n🔒 Énigmes bloquées 10 min\n\n(L'énigme est quand même validée)`, 'warning');
+                            } else {
+                                showToast(`🎉 Bonne réponse !`, 'success');
+                                await this.loadEnigmes();
+                                await this.loadUserData();
+                            }
 
                         } else {
                             // Wrong answer
                             const newAttempts = progress.wrong_attempts + 1;
 
                             if (newAttempts >= 3) {
-                                // Lock for 30 minutes
+                                // Lockout after 3 wrong attempts
                                 const lockUntil = new Date();
                                 lockUntil.setMinutes(lockUntil.getMinutes() + 15);
 
@@ -2475,7 +2937,7 @@
                                 // Get progress to calculate points NOW
                                 const progress = await self.getProgress(self.currentScanEnigmaId);
 
-                                // Calculate points based on how many QR codes have been scanned for this enigma
+                                // Calculate POSITION points based on how many QR codes have been scanned for this enigma
                                 let countQuery = supabase
                                     .from('enigma_progress')
                                     .select('id', { count: 'exact' })
@@ -2484,22 +2946,46 @@
 
                                 const { count } = await countQuery;
 
-                                let points = 50;
-                                if (count === 0) points = 200;
-                                else if (count === 1) points = 150;
-                                else if (count === 2) points = 100;
+                                // New point system: 125/100/75/50
+                                let positionPoints = 50;
+                                if (count === 0) positionPoints = 125;
+                                else if (count === 1) positionPoints = 100;
+                                else if (count === 2) positionPoints = 75;
+
+                                // Calculate TIME BONUS
+                                let timeBonus = 0;
+                                if (progress.qr_hunt_started_at) {
+                                    const huntStarted = new Date(progress.qr_hunt_started_at);
+                                    const now = new Date();
+                                    const elapsedMin = (now - huntStarted) / 60000;
+
+                                    if (elapsedMin < 20) timeBonus = 20;
+                                    else if (elapsedMin < 40) timeBonus = 10;
+                                    else if (elapsedMin < 60) timeBonus = 5;
+                                }
+
+                                const totalPoints = positionPoints + timeBonus;
 
                                 // Mark as scanned and store points
                                 await self.updateProgress(progress.id, {
                                     qr_scanned: true,
-                                    points_earned: points
+                                    points_earned: totalPoints
                                 });
 
                                 // NOW award the points!
-                                await self.awardPoints(points);
+                                await self.awardPoints(totalPoints);
 
                                 self.closeQRScanner();
-                                showToast(`✅ QR Code validé !\n\n+${points} points gagnés !`, 'success');
+
+                                // Build detailed message
+                                let positionEmoji = '🏅';
+                                if (count === 0) positionEmoji = '🥇';
+                                else if (count === 1) positionEmoji = '🥈';
+                                else if (count === 2) positionEmoji = '🥉';
+
+                                let bonusMsg = timeBonus > 0 ? `\n⏱️ Bonus temps : +${timeBonus}` : '';
+
+                                showToast(`✅ QR Code validé !\n\n${positionEmoji} Position : +${positionPoints}${bonusMsg}\n\n💎 Total : +${totalPoints} points !`, 'success');
                                 await self.loadEnigmes();
                                 await self.loadUserData();
                             } else {
@@ -2529,6 +3015,88 @@
                     console.error('Error opening QR scanner:', error);
                     showToast('❌ Erreur lors de l\'ouverture du scanner', 'error');
                 }
+            },
+
+            // ========== QR HUNT (Je suis prêt) ==========
+
+            async startQRHunt(enigmaId) {
+                try {
+                    const progress = await this.getProgress(enigmaId);
+
+                    if (!progress || !progress.solved) {
+                        showToast('❌ Tu dois d\'abord résoudre l\'énigme !', 'error');
+                        return;
+                    }
+
+                    if (progress.qr_hunt_started_at) {
+                        showToast('⚠️ Le chrono est déjà lancé !', 'warning');
+                        return;
+                    }
+
+                    // Start the hunt timer
+                    const now = new Date().toISOString();
+                    await this.updateProgress(progress.id, {
+                        qr_hunt_started_at: now
+                    });
+
+                    showToast('🏃 C\'est parti ! Trouve le QR Code le plus vite possible !', 'success');
+                    await this.loadEnigmes();
+
+                } catch (error) {
+                    console.error('Error starting QR hunt:', error);
+                    showToast('❌ Erreur lors du lancement', 'error');
+                }
+            },
+
+            // Live timer for QR hunt
+            qrTimers: {},
+
+            startQRTimer(enigmaId, startTime) {
+                // Clear existing timer for this enigma if any
+                if (this.qrTimers[enigmaId]) {
+                    clearInterval(this.qrTimers[enigmaId]);
+                }
+
+                const updateTimer = () => {
+                    const timerEl = document.getElementById(`qrTimer-${enigmaId}`);
+                    const bonusEl = document.getElementById(`qrBonus-${enigmaId}`);
+
+                    if (!timerEl || !bonusEl) {
+                        clearInterval(this.qrTimers[enigmaId]);
+                        return;
+                    }
+
+                    const now = new Date();
+                    const elapsedMs = now - startTime;
+                    const elapsedMin = Math.floor(elapsedMs / 60000);
+                    const elapsedSec = Math.floor((elapsedMs % 60000) / 1000);
+
+                    timerEl.textContent = `${elapsedMin}:${elapsedSec.toString().padStart(2, '0')}`;
+
+                    // Update bonus display
+                    let bonusText = '';
+                    let color = '#ff4444';
+                    if (elapsedMin < 20) {
+                        bonusText = '🔥 +20 pts';
+                        color = '#81FE0E';
+                    } else if (elapsedMin < 40) {
+                        bonusText = '⚡ +10 pts';
+                        color = '#81FE0E';
+                    } else if (elapsedMin < 60) {
+                        bonusText = '✨ +5 pts';
+                        color = '#ffaa00';
+                    } else {
+                        bonusText = '⏰ Pas de bonus';
+                        color = '#ff4444';
+                    }
+
+                    bonusEl.textContent = bonusText;
+                    bonusEl.parentElement.style.color = color;
+                };
+
+                // Update immediately and then every second
+                updateTimer();
+                this.qrTimers[enigmaId] = setInterval(updateTimer, 1000);
             },
 
             async closeQRScanner() {
