@@ -1113,7 +1113,7 @@
                     avant le 2, etc.)</p>
 
                 <h3>🏳️ J'abandonne</h3>
-                <p>Vraiment bloqué ? Tu peux demander la solution pour <strong>-95 points</strong>.</p>
+                <p>Vraiment bloqué ? Tu peux demander la solution pour <strong>-50 points</strong>.</p>
                 <p style="color: #666; font-style: italic;">L'énigme sera validée et tu pourras passer à la suivante,
                     mais attention au malus !</p>
 
@@ -2500,7 +2500,7 @@
                                 content += `
                                     <div class="hint-item" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
                                         <button class="btn btn-danger" onclick="hdnApp.giveUp(${enigma.id})" style="width: 100%;">
-                                            🏳️ J'abandonne, donne-moi la solution (-95 points)
+                                            🏳️ J'abandonne, donne-moi la solution (-50 points)
                                         </button>
                                     </div>
                                 `;
@@ -2705,7 +2705,7 @@
 
                 try {
                     const progress = await this.getProgress(enigmaId);
-                    const GIVE_UP_COST = 95;
+                    const GIVE_UP_COST = 50;
 
                     // Deduct points from player
                     const newPoints = this.currentUser.points - GIVE_UP_COST;
