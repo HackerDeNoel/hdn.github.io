@@ -35,12 +35,12 @@
 
         .container {
             max-width: 1281px;
-            margin: 0 auto;
-            padding: 10px;
-            display: flex;
-            flex-flow: column nowrap;
-            justify-content: center;
-            align-items: center;
+  margin: 0 auto;
+  padding: 10px;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
         }
 
         /* Header */
@@ -96,16 +96,16 @@
         /* Navigation */
         nav {
             background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 0 30px rgba(129, 254, 14, 0.2);
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-            max-width: 1000px;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 0 30px rgba(129, 254, 14, 0.2);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 1000px;
         }
 
         nav button {
@@ -185,9 +185,7 @@
         }
 
         /* Forms */
-        input,
-        select,
-        textarea {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -197,9 +195,7 @@
             font-size: 0.9em;
         }
 
-        input:focus,
-        select:focus,
-        textarea:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #81FE0E;
             box-shadow: 0 0 10px rgba(129, 254, 14, 0.3);
@@ -314,7 +310,7 @@
             border-radius: 10px;
             margin: 15px auto;
             display: block;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         /* Badge */
@@ -367,17 +363,9 @@
             text-align: center;
         }
 
-        .ranking-position.first {
-            color: #FFD700;
-        }
-
-        .ranking-position.second {
-            color: #C0C0C0;
-        }
-
-        .ranking-position.third {
-            color: #CD7F32;
-        }
+        .ranking-position.first { color: #FFD700; }
+        .ranking-position.second { color: #C0C0C0; }
+        .ranking-position.third { color: #CD7F32; }
 
         .ranking-info {
             flex: 1;
@@ -447,13 +435,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Responsive */
@@ -492,15 +475,15 @@
         /* User info header */
         .user-info {
             background: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 0 20px rgba(129, 254, 14, 0.2);
-            gap: 15px;
-            width: 100%;
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 20px rgba(129, 254, 14, 0.2);
+  gap: 15px;
+  width: 100%;
         }
 
         .user-info-left {
@@ -513,7 +496,7 @@
             font-size: 1.3em;
             font-weight: 900;
         }
-
+        
         .user-info-left span {
             color: #343973;
             font-size: 0.9em;
@@ -534,18 +517,17 @@
             border-left: 4px solid #343973;
         }
 
-        .hints-section div {
-            display: flex;
-            flex: column nowrap;
-            gap: 10px;
-        }
+.hints-section div {
+    display: flex;
+    flex: column nowrap;
+    gap: 10px;
+}
 
-        @media screen and (min-width: 961px) {
-            .hints-section div {
-                flex: row nowrap;
-                ;
-            }
-        }
+@media screen and (min-width: 961px) {
+    .hints-section div {
+    flex: row nowrap;;
+}
+}
 
         .hint-item {
             padding: 10px;
@@ -554,10 +536,10 @@
             border-radius: 8px;
         }
 
-        .hint-item.locked {
+         .hint-item.locked {
             cursor: none;
             opacity: 0.5;
-        }
+         }
 
 
         /* Lockout timer */
@@ -573,15 +555,8 @@
         }
 
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         .lockout-timer h3 {
@@ -644,7 +619,6 @@
                 bottom: -100px;
                 opacity: 0;
             }
-
             to {
                 bottom: 30px;
                 opacity: 1;
@@ -713,74 +687,74 @@
         }
 
         /* Floating rules button */
-        .floating-rules-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #343973;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            border: none;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s;
-            z-index: 1000;
-        }
+.floating-rules-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #343973;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1000;
+}
 
-        .floating-rules-btn:hover {
-            background: #81FE0E;
-            color: #000;
-            transform: translateY(-3px);
-        }
+.floating-rules-btn:hover {
+    background: #81FE0E;
+    color: #000;
+    transform: translateY(-3px);
+}
 
-        /* Rules modal */
-        .rules-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+/* Rules modal */
+.rules-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
 
-        .rules-modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 10px;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-        }
+.rules-modal-content {
+    background: white;
+    border-radius: 15px;
+    padding: 10px;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
 
-        .rules-modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 1.5em;
-            cursor: pointer;
-            font-weight: bold;
-        }
+.rules-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-        .rules-modal-close:hover {
-            background: #cc0000;
-        }
+.rules-modal-close:hover {
+    background: #cc0000;
+}
 
-        /* Password input with eye toggle */
+/* Password input with eye toggle */
         .password-container {
             position: relative;
             width: 100%;
@@ -871,17 +845,18 @@
 
                     <label>Mot de passe (6 chiffres)</label>
                     <div class="password-container">
-                        <input type="password" id="loginPassword" placeholder="123456" maxlength="6" inputmode="numeric"
-                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="loginPassword" placeholder="123456" maxlength="6"
+                               inputmode="numeric" pattern="[0-9]*"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                            onclick="togglePassword('loginPassword', this)">👁️</button>
+                                onclick="togglePassword('loginPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.login()">
                         🚀 Se connecter
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToChoice()">
+                            onclick="hdnApp.backToChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -906,7 +881,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToChoice()">
+                            onclick="hdnApp.backToChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -919,18 +894,19 @@
 
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
-                        <input type="password" id="soloPassword" placeholder="123456" maxlength="6" inputmode="numeric"
-                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="soloPassword" placeholder="123456" maxlength="6"
+                               inputmode="numeric" pattern="[0-9]*"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                            onclick="togglePassword('soloPassword', this)">👁️</button>
+                                onclick="togglePassword('soloPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;"
-                        onclick="hdnApp.registerSolo()">
+                            onclick="hdnApp.registerSolo()">
                         ✅ S'inscrire Solo
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToRegisterChoice()">
+                            onclick="hdnApp.backToRegisterChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -955,7 +931,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToRegisterChoice()">
+                            onclick="hdnApp.backToRegisterChoice()">
                         ← Retour
                     </button>
                 </div>
@@ -971,18 +947,19 @@
 
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
-                        <input type="password" id="teamPassword" placeholder="123456" maxlength="6" inputmode="numeric"
-                            pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                        <input type="password" id="teamPassword" placeholder="123456" maxlength="6"
+                               inputmode="numeric" pattern="[0-9]*"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                            onclick="togglePassword('teamPassword', this)">👁️</button>
+                                onclick="togglePassword('teamPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;"
-                        onclick="hdnApp.createTeam()">
+                            onclick="hdnApp.createTeam()">
                         🎯 Créer l'équipe
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToTeamAction()">
+                            onclick="hdnApp.backToTeamAction()">
                         ← Retour
                     </button>
                 </div>
@@ -999,17 +976,17 @@
                     <label>Mot de passe (6 chiffres) *</label>
                     <div class="password-container">
                         <input type="password" id="joincreateTeamPassword" placeholder="123456" maxlength="6"
-                            inputmode="numeric" pattern="[0-9]*"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                               inputmode="numeric" pattern="[0-9]*"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                         <button type="button" class="password-toggle"
-                            onclick="togglePassword('joincreateTeamPassword', this)">👁️</button>
+                                onclick="togglePassword('joincreateTeamPassword', this)">👁️</button>
                     </div>
 
                     <button class="btn btn-success" style="width: 100%; margin-top: 15px;" onclick="hdnApp.joinTeam()">
                         🚀 Rejoindre
                     </button>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px;"
-                        onclick="hdnApp.backToTeamAction()">
+                            onclick="hdnApp.backToTeamAction()">
                         ← Retour
                     </button>
                 </div>
@@ -1023,7 +1000,7 @@
 
                 <!-- Anti-IA Block Message (hidden by default) -->
                 <div id="antiIaBlockMessage"
-                    style="display: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                     style="display: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
                     <h3 style="color: white; margin: 0 0 10px 0;">🤖 Demander les réponses ne te donnera pas de mérite à
                         être premier !</h3>
                     <p style="color: white; margin: 0 0 15px 0;">Accès aux énigmes bloqué</p>
@@ -1032,7 +1009,7 @@
                         <h2 id="antiIaCountdown" style="color: #81FE0E; margin: 5px 0 0 0; font-size: 2em;">--:--</h2>
                     </div>
                     <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">L'énigme a été
-                        validée, mais tu as reçu une pénalité de -50 points.</p>
+                        validée, mais tu as reçu une pénalité de -10 points.</p>
                 </div>
 
                 <!-- Countdown Timer -->
@@ -1062,7 +1039,7 @@
                     <button class="btn btn-primary" onclick="hdnApp.showEditPseudoModal()">✏️ Modifier mon
                         pseudo</button>
                     <button class="btn btn-primary" id="editTeamBtn" onclick="hdnApp.showEditTeamModal()"
-                        style="display: none;">👥 Modifier le nom d'équipe</button>
+                            style="display: none;">👥 Modifier le nom d'équipe</button>
                 </div>
             </div>
         </div>
@@ -1136,7 +1113,7 @@
                     avant le 2, etc.)</p>
 
                 <h3>🏳️ J'abandonne</h3>
-                <p>Vraiment bloqué ? Tu peux demander la solution pour <strong>-50 points</strong>.</p>
+                <p>Vraiment bloqué ? Tu peux demander la solution pour <strong>-95 points</strong>.</p>
                 <p style="color: #666; font-style: italic;">L'énigme sera validée et tu pourras passer à la suivante,
                     mais attention au malus !</p>
 
@@ -2521,9 +2498,9 @@
 
                                 // Bouton "J'abandonne" - toujours visible
                                 content += `
-                                    <div class="hint-item" style="margin-top: 15px; padding-top: 15px;">
+                                    <div class="hint-item" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
                                         <button class="btn btn-danger" onclick="hdnApp.giveUp(${enigma.id})" style="width: 100%;">
-                                            🏳️ J'abandonne, donne-moi la solution (-50 points)
+                                            🏳️ J'abandonne, donne-moi la solution (-95 points)
                                         </button>
                                     </div>
                                 `;
@@ -2722,13 +2699,13 @@
 
             async giveUp(enigmaId) {
                 // Confirmation
-                if (!confirm('⚠️ Tu vas perdre 50 points et voir la solution.\n\nL\'énigme sera validée et tu pourras passer à la suivante.\n\nConfirmer ?')) {
+                if (!confirm('⚠️ Tu vas perdre 25 points et voir la solution.\n\nL\'énigme sera validée et tu pourras passer à la suivante.\n\nConfirmer ?')) {
                     return;
                 }
 
                 try {
                     const progress = await this.getProgress(enigmaId);
-                    const GIVE_UP_COST = 50;
+                    const GIVE_UP_COST = 95;
 
                     // Deduct points from player
                     const newPoints = this.currentUser.points - GIVE_UP_COST;
@@ -2943,8 +2920,8 @@
                                         .update({ enigmas_blocked_until: blockUntil.toISOString() })
                                         .eq('id', this.currentUser.id);
 
-                                    // Deduct 50 points
-                                    const newPoints = this.currentUser.points - 50;
+                                    // Deduct 10 points
+                                    const newPoints = this.currentUser.points - 10;
                                     await supabase
                                         .from('players')
                                         .update({ points: newPoints })
@@ -2963,7 +2940,7 @@
                                 // Redirect to home with penalty message
                                 await this.loadUserData();
                                 this.showSection('home');
-                                showToast(`🤖 Demander les réponses ne te donnera pas de mérite à être premier !\n\n-50 points\n🔒 Énigmes bloquées 10 min\n\n(L'énigme est quand même validée)`, 'warning');
+                                showToast(`🤖 Demander les réponses ne te donnera pas de mérite à être premier !\n\n-10 points\n🔒 Énigmes bloquées 10 min\n\n(L'énigme est quand même validée)`, 'warning');
                             } else {
                                 showToast(`🎉 Bonne réponse !`, 'success');
                                 await this.loadEnigmes();
@@ -3442,6 +3419,7 @@
                                         onclick="hdnApp.togglePublish(${enigma.id}, ${!enigma.published})">
                                     ${enigma.published ? '📥 Dépublier' : '📤 Publier'}
                                 </button>
+                                ${enigma.published ? `<button class="btn btn-success" onclick="hdnApp.showNotifyModal(${enigma.id}, ${enigma.number}, '${enigma.title.replace(/'/g, "\\'")}')">📧 Notifier</button>` : ''}
                                 <button class="btn btn-danger" onclick="hdnApp.deleteEnigma(${enigma.id})">🗑️ Supprimer</button>
                             </div>
                             <div id="qr-display-${enigma.number}" class="qr-code-container hidden"></div>
@@ -3862,6 +3840,162 @@
                 } catch (error) {
                     console.error('Error:', error);
                     showToast('❌ Erreur lors de la validation', 'error');
+                }
+            },
+
+            // ========== EMAIL NOTIFICATIONS ==========
+
+            WORKER_URL: 'https://hdn-mailer.hdn-chistmasproject.workers.dev/',
+
+            async showNotifyModal(enigmaId, enigmaNumber, enigmaTitle) {
+                showToast('⏳ Analyse des joueurs...', 'info');
+
+                try {
+                    // Récupérer tous les joueurs avec leur email
+                    const { data: players } = await supabase
+                        .from('players')
+                        .select('id, pseudo, email, team_id, is_admin, is_test')
+                        .eq('is_admin', false)
+                        .eq('is_test', false);
+
+                    if (!players || players.length === 0) {
+                        showToast('❌ Aucun joueur trouvé', 'error');
+                        return;
+                    }
+
+                    // Pour chaque joueur, vérifier s'il a résolu l'énigme précédente
+                    const previousEnigmaNumber = enigmaNumber - 1;
+
+                    let playersUpToDate = [];
+                    let playersBehind = [];
+
+                    if (previousEnigmaNumber < 1) {
+                        // Première énigme : tout le monde est "à jour"
+                        playersUpToDate = players.filter(p => p.email);
+                    } else {
+                        // Récupérer l'ID de l'énigme précédente
+                        const { data: prevEnigma } = await supabase
+                            .from('enigmas')
+                            .select('id')
+                            .eq('number', previousEnigmaNumber)
+                            .single();
+
+                        if (!prevEnigma) {
+                            showToast('❌ Énigme précédente non trouvée', 'error');
+                            return;
+                        }
+
+                        // Récupérer les progress de l'énigme précédente
+                        const { data: progressList } = await supabase
+                            .from('enigma_progress')
+                            .select('player_id, team_id, solved')
+                            .eq('enigma_id', prevEnigma.id)
+                            .eq('solved', true);
+
+                        const solvedPlayerIds = new Set(progressList?.filter(p => p.player_id).map(p => p.player_id) || []);
+                        const solvedTeamIds = new Set(progressList?.filter(p => p.team_id).map(p => p.team_id) || []);
+
+                        for (const player of players) {
+                            if (!player.email) continue;
+
+                            const hasSolved = player.team_id
+                                ? solvedTeamIds.has(player.team_id)
+                                : solvedPlayerIds.has(player.id);
+
+                            if (hasSolved) {
+                                playersUpToDate.push(player);
+                            } else {
+                                playersBehind.push(player);
+                            }
+                        }
+                    }
+
+                    // Afficher la modal de confirmation
+                    const modal = document.createElement('div');
+                    modal.id = 'notifyModal';
+                    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+                    modal.innerHTML = `
+                        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 100%;">
+                            <h3 style="color: #343973; margin-bottom: 20px;">📧 Notifier les joueurs</h3>
+                            <p style="color: #666; margin-bottom: 15px;">
+                                <strong>Énigme #${enigmaNumber}</strong> - ${enigmaTitle}
+                            </p>
+                            
+                            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                <p style="color: #2e7d32; margin: 0; font-weight: bold;">
+                                    ✅ Joueurs à jour : ${playersUpToDate.length}
+                                </p>
+                                <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">
+                                    Recevront : "Sois le premier à résoudre !"
+                                </p>
+                            </div>
+                            
+                            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="color: #e65100; margin: 0; font-weight: bold;">
+                                    ⚠️ Joueurs en retard : ${playersBehind.length}
+                                </p>
+                                <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">
+                                    Recevront : "Tu as du retard, rattrape-toi !"
+                                </p>
+                            </div>
+
+                            <p style="color: #333; font-weight: bold; margin-bottom: 15px;">
+                                📬 Total : ${playersUpToDate.length + playersBehind.length} emails à envoyer
+                            </p>
+                            
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button class="btn btn-secondary" onclick="document.getElementById('notifyModal').remove()">
+                                    Annuler
+                                </button>
+                                <button class="btn btn-success" onclick="hdnApp.sendNotifications(${enigmaNumber}, '${enigmaTitle.replace(/'/g, "\\'")}', ${JSON.stringify(playersUpToDate.map(p => p.email)).replace(/"/g, '&quot;')}, ${JSON.stringify(playersBehind.map(p => p.email)).replace(/"/g, '&quot;')})">
+                                    📧 Envoyer ${playersUpToDate.length + playersBehind.length} emails
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('❌ Erreur lors de l\'analyse', 'error');
+                }
+            },
+
+            async sendNotifications(enigmaNumber, enigmaTitle, playersUpToDate, playersBehind) {
+                // Fermer la modal
+                document.getElementById('notifyModal')?.remove();
+
+                showToast('📧 Envoi des emails en cours...', 'info');
+
+                try {
+                    const response = await fetch(this.WORKER_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            enigmaNumber,
+                            enigmaTitle,
+                            playersUpToDate,
+                            playersBehind
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast(`✅ ${result.sent} emails envoyés !`, 'success');
+                        if (result.errors > 0) {
+                            console.warn('Email errors:', result.details);
+                            showToast(`⚠️ ${result.errors} erreur(s) d'envoi`, 'warning');
+                        }
+                    } else {
+                        throw new Error(result.error || 'Erreur inconnue');
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('❌ Erreur lors de l\'envoi: ' + error.message, 'error');
                 }
             },
 
