@@ -625,6 +625,28 @@
             }
         }
 
+        /* Audio player timeline - Spotify style */
+        [id^="audio-timeline-"] {
+            transition: height 0.15s ease;
+        }
+        [id^="audio-timeline-"]:hover {
+            height: 10px !important;
+        }
+        [id^="audio-timeline-"]:hover [id^="audio-handle-"] {
+            opacity: 1 !important;
+        }
+
+        /* Audio player volume bar - Spotify style */
+        [id^="audio-volume-bar-"] {
+            transition: height 0.15s ease;
+        }
+        [id^="audio-volume-bar-"]:hover {
+            height: 6px !important;
+        }
+        [id^="audio-volume-bar-"]:hover [id^="audio-volume-handle-"] {
+            opacity: 1 !important;
+        }
+
         /* Auth choice buttons */
         .auth-choice-container {
             display: flex;
@@ -782,6 +804,16 @@
 
         .password-toggle:hover {
             opacity: 1;
+        }
+
+        .audio-player {
+            flex-flow: column nowrap;
+        }
+
+        @media screen and (min-width: 961px) {
+            .audio-player {
+            flex-flow: row nowrap;
+        }
         }
     </style>
 </head>
@@ -1187,6 +1219,24 @@
             }
         }
 
+        // Audio upload toggle
+        function toggleAudioUpload() {
+            const checkbox = document.getElementById('enigmaHasAudio');
+            const section = document.getElementById('audioUploadSection');
+            section.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        // Remove audio
+        let audioToRemove = false;
+        function removeAudio() {
+            if (confirm('Supprimer l\'audio de cette énigme ?')) {
+                audioToRemove = true;
+                document.getElementById('currentAudioUrl').style.display = 'none';
+                document.getElementById('enigmaAudioFile').value = '';
+                showToast('🗑️ Audio marqué pour suppression', 'info');
+            }
+        }
+
         // Timezone helper - Convert UTC to Paris time
         function toParisTime(utcDateString) {
             if (!utcDateString) return null;
@@ -1223,6 +1273,10 @@
             qrScanner: null,
             countdownInterval: null,
             currentScanEnigmaId: null,
+
+            // Bound drag handlers (initialized in init)
+            boundOnDrag: null,
+            boundEndDrag: null,
 
             // Helper to convert local datetime to UTC ISO string
             convertLocalToUTC(localDatetimeString) {
@@ -1363,6 +1417,10 @@
 
             async init() {
                 console.log('🎄 HDN Christmas App Starting...');
+
+                // Bind drag handlers to preserve 'this' context
+                this.boundOnDrag = this.onDrag.bind(this);
+                this.boundEndDrag = this.endDrag.bind(this);
 
                 // Check if user is logged in
                 const savedUser = localStorage.getItem('hdnCurrentUser');
@@ -1951,6 +2009,24 @@
                         URL de l'image à afficher avec l'énigme (optionnel)
                     </p>
 
+                    <h3>🎵 Audio (optionnel)</h3>
+                    <label>
+                        <input type="checkbox" id="enigmaHasAudio" style="width: auto; margin-right: 10px;" onchange="toggleAudioUpload()" />
+                        Cette énigme contient un message audio
+                    </label>
+                    <div id="audioUploadSection" style="display: none; margin-top: 15px; padding: 15px; background: #f0f8ff; border-radius: 8px; border: 1px dashed #343973;">
+                        <label>Fichier audio (MP3)</label>
+                        <input type="file" id="enigmaAudioFile" accept="audio/mp3,audio/mpeg" style="padding: 10px; background: white; border-radius: 5px;" />
+                        <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                            💡 Le fichier sera uploadé automatiquement lors de la sauvegarde
+                        </p>
+                        <div id="currentAudioUrl" style="display: none; margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px;">
+                            <span style="color: #2e7d32;">✅ Audio actuel :</span>
+                            <a id="currentAudioLink" href="#" target="_blank" style="color: #343973; word-break: break-all;"></a>
+                            <button type="button" onclick="removeAudio()" style="margin-left: 10px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 5px; cursor: pointer;">🗑️ Supprimer</button>
+                        </div>
+                    </div>
+
                     <label>Réponse *</label>
                     <input type="text" id="enigmaAnswer" placeholder="Réponse correcte" />
 
@@ -2328,10 +2404,10 @@
                 container.innerHTML = '<div class="loading">Chargement des énigmes...</div>';
 
                 try {
-                    // Get published enigmas (WITHOUT answer and qr_secret for security)
+                    // Get published enigmas (WITHOUT sensitive data)
                     const { data: enigmas } = await supabase
                         .from('enigmas')
-                        .select('id, number, title, description, image_url, location, validation_type, hint1, hint2, hint3, published, scheduled_at, created_at')
+                        .select('id, number, title, description, image_url, audio_url, location, validation_type, published, scheduled_at, created_at')
                         .eq('published', true)
                         .order('number', { ascending: true });
 
@@ -2387,6 +2463,48 @@
                         // Show image if available
                         if (enigma.image_url) {
                             content += `<img src="${enigma.image_url}" class="enigme-image" alt="Image de l'énigme" onerror="this.style.display='none'" />`;
+                        }
+
+                        // Show audio player if available
+                        if (enigma.audio_url) {
+                            content += `
+                                <div class="audio-player" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid #81FE0E; border-radius: 10px; padding: 12px 15px; margin: 15px 0; display: flex; align-items: center; gap: 12px;">
+                                    <button onclick="hdnApp.toggleAudioPlayer(${enigma.id})" id="audio-btn-${enigma.id}" 
+                                            style="background: #81FE0E; border: none; color: #000; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        ▶️
+                                    </button>
+                                    <div style="flex-grow: 1; width: 100%;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="color: #81FE0E; font-size: 12px;">🎵</span>
+                                            <span style="color: #fff; font-size: 13px;">Bouge ton corps</span>
+                                            <span id="audio-time-${enigma.id}" style="color: #888; font-size: 11px; margin-left: auto;">0:00 / 0:00</span>
+                                        </div>
+                                        <div id="audio-timeline-${enigma.id}" 
+                                             onmousedown="hdnApp.startDrag(event, ${enigma.id})"
+                                             ontouchstart="hdnApp.startDrag(event, ${enigma.id})"
+                                             style="background: #333; border-radius: 4px; height: 6px; margin-top: 8px; cursor: pointer; position: relative;">
+                                            <div id="audio-progress-${enigma.id}" style="background: linear-gradient(90deg, #81FE0E, #4ade80); height: 100%; width: 0%; border-radius: 4px; pointer-events: none; position: relative;">
+                                                <div id="audio-handle-${enigma.id}" style="position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span id="audio-volume-icon-${enigma.id}" onclick="hdnApp.toggleMute(${enigma.id})" style="color: #81FE0E; font-size: 14px; cursor: pointer; width: 20px; text-align: center;">🔊</span>
+                                        <div id="audio-volume-bar-${enigma.id}" 
+                                             onmousedown="hdnApp.startVolumeDrag(event, ${enigma.id})"
+                                             ontouchstart="hdnApp.startVolumeDrag(event, ${enigma.id})"
+                                             style="background: #333; border-radius: 4px; height: 4px; width: 100px; cursor: pointer; position: relative;">
+                                            <div id="audio-volume-progress-${enigma.id}" style="background: linear-gradient(90deg, #81FE0E, #4ade80); height: 100%; width: 70%; border-radius: 4px; pointer-events: none; position: relative;">
+                                                <div id="audio-volume-handle-${enigma.id}" style="position: absolute; right: -5px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <audio id="audio-element-${enigma.id}" src="${enigma.audio_url}" preload="metadata"
+                                           ontimeupdate="hdnApp.updateAudioProgress(${enigma.id})"
+                                           onloadedmetadata="hdnApp.onAudioLoaded(${enigma.id})"
+                                           onended="hdnApp.onAudioEnded(${enigma.id})"></audio>
+                                </div>
+                            `;
                         }
 
                         // Answer form or solved status
@@ -2460,39 +2578,38 @@
                                 }
                             }
                         } else if (!lockStatus.locked) {
-                            // Hints section - Only show if NOT solved
-                            if (enigma.hint1 || enigma.hint2 || enigma.hint3) {
+                            // Fetch hints securely via RPC
+                            const { data: hintsData } = await supabase.rpc('get_enigma_hints', {
+                                p_enigma_id: enigma.id,
+                                p_player_id: this.currentUser.team_id ? null : this.currentUser.id,
+                                p_team_id: this.currentUser.team_id || null
+                            });
+
+                            // Hints section - Only show if NOT solved and hints exist
+                            if (hintsData && (hintsData.hint1_exists || hintsData.hint2_exists || hintsData.hint3_exists)) {
                                 content += '<div class="hints-section"><h4>💡 Indices</h4>';
 
-                                if (enigma.hint1) {
-                                    const hint1Used = progress?.hints_used?.includes(1);
-                                    // Indice 1 : JAMAIS locked
+                                if (hintsData.hint1_exists) {
                                     content += `<div class="hint-item">`;
-                                    content += hint1Used
-                                        ? `<p><strong>Indice 1 :</strong> ${enigma.hint1}</p>`
+                                    content += hintsData.hint1_unlocked
+                                        ? `<p><strong>Indice 1 :</strong> ${hintsData.hint1_content}</p>`
                                         : `<button class="btn btn-warning" onclick="hdnApp.requestHint(${enigma.id}, 1)">🔓 Indice 1 (-5 points)</button>`;
                                     content += '</div>';
                                 }
 
-                                if (enigma.hint2) {
-                                    const hint1Used = progress?.hints_used?.includes(1);
-                                    const hint2Used = progress?.hints_used?.includes(2);
-                                    // Indice 2 : locked si indice 1 pas pris
-                                    content += `<div class="hint-item ${!hint1Used ? 'locked' : ''}">`;
-                                    content += hint2Used
-                                        ? `<p><strong>Indice 2 :</strong> ${enigma.hint2}</p>`
-                                        : `<button class="btn btn-warning" onclick="hdnApp.requestHint(${enigma.id}, 2)" ${!hint1Used ? 'disabled' : ''}>🔓 Indice 2 (-10 points)</button>`;
+                                if (hintsData.hint2_exists) {
+                                    content += `<div class="hint-item ${!hintsData.hint1_unlocked ? 'locked' : ''}">`;
+                                    content += hintsData.hint2_unlocked
+                                        ? `<p><strong>Indice 2 :</strong> ${hintsData.hint2_content}</p>`
+                                        : `<button class="btn btn-warning" onclick="hdnApp.requestHint(${enigma.id}, 2)" ${!hintsData.hint1_unlocked ? 'disabled' : ''}>🔓 Indice 2 (-10 points)</button>`;
                                     content += '</div>';
                                 }
 
-                                if (enigma.hint3) {
-                                    const hint2Used = progress?.hints_used?.includes(2);
-                                    const hint3Used = progress?.hints_used?.includes(3);
-                                    // Indice 3 : locked si indice 2 pas pris
-                                    content += `<div class="hint-item ${!hint2Used ? 'locked' : ''}">`;
-                                    content += hint3Used
-                                        ? `<p><strong>Indice 3 :</strong> ${enigma.hint3}</p>`
-                                        : `<button class="btn btn-warning" onclick="hdnApp.requestHint(${enigma.id}, 3)" ${!hint2Used ? 'disabled' : ''}>🔓 Indice 3 (-15 points)</button>`;
+                                if (hintsData.hint3_exists) {
+                                    content += `<div class="hint-item ${!hintsData.hint2_unlocked ? 'locked' : ''}">`;
+                                    content += hintsData.hint3_unlocked
+                                        ? `<p><strong>Indice 3 :</strong> ${hintsData.hint3_content}</p>`
+                                        : `<button class="btn btn-warning" onclick="hdnApp.requestHint(${enigma.id}, 3)" ${!hintsData.hint2_unlocked ? 'disabled' : ''}>🔓 Indice 3 (-15 points)</button>`;
                                     content += '</div>';
                                 }
 
@@ -2567,6 +2684,8 @@
 
             async getProgress(enigmaId) {
                 try {
+                    console.log('getProgress called for enigmaId:', enigmaId, 'user:', this.currentUser?.id, 'team:', this.currentUser?.team_id);
+
                     let query = supabase
                         .from('enigma_progress')
                         .select('*')
@@ -2578,14 +2697,22 @@
                         query = query.eq('player_id', this.currentUser.id);
                     }
 
-                    const { data: existing } = await query.maybeSingle();
+                    // Use limit(1) + order to handle duplicates gracefully
+                    const { data: existingList, error: selectError } = await query
+                        .order('created_at', { ascending: true })
+                        .limit(1);
+
+                    const existing = existingList && existingList.length > 0 ? existingList[0] : null;
+
+                    console.log('getProgress existing:', existing, 'error:', selectError);
 
                     if (existing) {
                         return existing;
                     }
 
                     // Create new progress
-                    const { data: newProgress } = await supabase
+                    console.log('Creating new progress...');
+                    const { data: newProgress, error: insertError } = await supabase
                         .from('enigma_progress')
                         .insert([{
                             player_id: this.currentUser.team_id ? null : this.currentUser.id,
@@ -2601,6 +2728,13 @@
                         }])
                         .select()
                         .single();
+
+                    console.log('getProgress newProgress:', newProgress, 'error:', insertError);
+
+                    if (insertError) {
+                        console.error('Error creating progress:', insertError);
+                        return null;
+                    }
 
                     return newProgress;
                 } catch (error) {
@@ -2627,65 +2761,46 @@
             },
 
             async updateProgress(progressId, updates) {
-                const { error } = await supabase
+                console.log('updateProgress called with:', { progressId, updates });
+
+                if (!progressId) {
+                    console.error('updateProgress: progressId is null/undefined');
+                    throw new Error('Progress ID is missing');
+                }
+
+                const { data, error } = await supabase
                     .from('enigma_progress')
                     .update({
                         ...updates,
                         updated_at: new Date().toISOString()
                     })
-                    .eq('id', progressId);
+                    .eq('id', progressId)
+                    .select();
+
+                console.log('updateProgress result:', { data, error });
 
                 if (error) throw error;
+                return data;
             },
 
             async requestHint(enigmaId, hintNumber) {
                 try {
-                    const progress = await this.getProgress(enigmaId);
+                    // Use secure RPC to unlock hint
+                    const { data: result, error } = await supabase.rpc('unlock_hint', {
+                        p_enigma_id: enigmaId,
+                        p_hint_number: hintNumber,
+                        p_player_id: this.currentUser.team_id ? null : this.currentUser.id,
+                        p_team_id: this.currentUser.team_id || null
+                    });
 
-                    // Check if hint already used
-                    if (progress.hints_used?.includes(hintNumber)) {
-                        showToast('Tu as déjà utilisé cet indice !', 'warning');
+                    if (error) throw error;
+
+                    if (!result.success) {
+                        showToast(`❌ ${result.error}`, 'error');
                         return;
                     }
 
-                    // Check if previous hint was used
-                    if (hintNumber > 1 && !progress.hints_used?.includes(hintNumber - 1)) {
-                        showToast('Tu dois utiliser les indices dans l\'ordre !', 'warning');
-                        return;
-                    }
-
-                    // Determine cost based on hint number
-                    let cost = 5;
-                    if (hintNumber === 2) cost = 10;
-                    if (hintNumber === 3) cost = 15;
-
-                    // Update hints used
-                    const newHints = progress.hints_used ? [...progress.hints_used, hintNumber] : [hintNumber];
-                    await this.updateProgress(progress.id, { hints_used: newHints });
-
-                    // Deduct points (can go negative)
-                    const newPoints = this.currentUser.points - cost;
-                    await supabase
-                        .from('players')
-                        .update({ points: newPoints })
-                        .eq('id', this.currentUser.id);
-
-                    if (this.currentUser.team_id) {
-                        const { data: team } = await supabase
-                            .from('teams')
-                            .select('points')
-                            .eq('id', this.currentUser.team_id)
-                            .maybeSingle();
-
-                        if (team) {
-                            await supabase
-                                .from('teams')
-                                .update({ points: team.points - cost })
-                                .eq('id', this.currentUser.team_id);
-                        }
-                    }
-
-                    showToast(`✅ Indice débloqué ! (-${cost} points)`, 'success');
+                    showToast(`✅ Indice débloqué ! (-${result.cost} points)`, 'success');
 
                     // Reload
                     await this.loadUserData();
@@ -2697,9 +2812,379 @@
                 }
             },
 
+            // ========== AUDIO PLAYER CONTROLS ==========
+            audioPlaying: {},
+            morseIntervals: {},
+
+            toggleAudioPlayer(enigmaId) {
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                const btn = document.getElementById(`audio-btn-${enigmaId}`);
+
+                if (!audio) return;
+
+                if (audio.paused) {
+                    // Stop other playing audios
+                    Object.keys(this.audioPlaying).forEach(id => {
+                        if (id != enigmaId && this.audioPlaying[id]) {
+                            const otherAudio = document.getElementById(`audio-element-${id}`);
+                            const otherBtn = document.getElementById(`audio-btn-${id}`);
+                            if (otherAudio) otherAudio.pause();
+                            if (otherBtn) otherBtn.textContent = '▶️';
+                            this.audioPlaying[id] = false;
+                            this.stopMorse(id);
+                        }
+                    });
+
+                    audio.play();
+                    btn.textContent = '⏸️';
+                    this.audioPlaying[enigmaId] = true;
+                    this.startMorse(enigmaId);
+                } else {
+                    audio.pause();
+                    btn.textContent = '▶️';
+                    this.audioPlaying[enigmaId] = false;
+                    this.stopMorse(enigmaId);
+                }
+            },
+
+            // Volume state
+            audioVolumes: {}, // Store volume per enigma
+            volumeBeforeMute: {}, // Store volume before mute
+            isVolumeDragging: false,
+            volumeDragEnigmaId: null,
+            boundOnVolumeDrag: null,
+            boundEndVolumeDrag: null,
+
+            setAudioVolume(enigmaId, value) {
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                const progressBar = document.getElementById(`audio-volume-progress-${enigmaId}`);
+                const icon = document.getElementById(`audio-volume-icon-${enigmaId}`);
+
+                if (audio) {
+                    audio.volume = value / 100;
+                    this.audioVolumes[enigmaId] = value;
+                }
+                if (progressBar) {
+                    progressBar.style.width = value + '%';
+                }
+                if (icon) {
+                    if (value === 0) icon.textContent = '🔇';
+                    else if (value < 30) icon.textContent = '🔈';
+                    else if (value < 70) icon.textContent = '🔉';
+                    else icon.textContent = '🔊';
+                }
+            },
+
+            toggleMute(enigmaId) {
+                const currentVolume = this.audioVolumes[enigmaId] ?? 70;
+
+                if (currentVolume > 0) {
+                    this.volumeBeforeMute[enigmaId] = currentVolume;
+                    this.setAudioVolume(enigmaId, 0);
+                } else {
+                    const restoreVolume = this.volumeBeforeMute[enigmaId] ?? 70;
+                    this.setAudioVolume(enigmaId, restoreVolume);
+                }
+            },
+
+            startVolumeDrag(event, enigmaId) {
+                event.preventDefault();
+                this.isVolumeDragging = true;
+                this.volumeDragEnigmaId = enigmaId;
+
+                const handle = document.getElementById(`audio-volume-handle-${enigmaId}`);
+                if (handle) handle.style.opacity = '1';
+
+                this.updateVolumeDragPosition(event, enigmaId);
+
+                // Bind if not already
+                if (!this.boundOnVolumeDrag) {
+                    this.boundOnVolumeDrag = this.onVolumeDrag.bind(this);
+                    this.boundEndVolumeDrag = this.endVolumeDrag.bind(this);
+                }
+
+                document.addEventListener('mousemove', this.boundOnVolumeDrag);
+                document.addEventListener('mouseup', this.boundEndVolumeDrag);
+                document.addEventListener('touchmove', this.boundOnVolumeDrag, { passive: false });
+                document.addEventListener('touchend', this.boundEndVolumeDrag);
+            },
+
+            onVolumeDrag(event) {
+                if (!this.isVolumeDragging || !this.volumeDragEnigmaId) return;
+                event.preventDefault();
+                this.updateVolumeDragPosition(event, this.volumeDragEnigmaId);
+            },
+
+            endVolumeDrag(event) {
+                if (!this.isVolumeDragging) return;
+
+                const handle = document.getElementById(`audio-volume-handle-${this.volumeDragEnigmaId}`);
+                const bar = document.getElementById(`audio-volume-bar-${this.volumeDragEnigmaId}`);
+
+                if (handle && bar) {
+                    const rect = bar.getBoundingClientRect();
+                    const clientX = event.clientX || (event.changedTouches && event.changedTouches[0].clientX);
+                    const clientY = event.clientY || (event.changedTouches && event.changedTouches[0].clientY);
+
+                    if (clientX < rect.left - 10 || clientX > rect.right + 10 || clientY < rect.top - 10 || clientY > rect.bottom + 10) {
+                        handle.style.opacity = '0';
+                    }
+                }
+
+                this.isVolumeDragging = false;
+                this.volumeDragEnigmaId = null;
+
+                document.removeEventListener('mousemove', this.boundOnVolumeDrag);
+                document.removeEventListener('mouseup', this.boundEndVolumeDrag);
+                document.removeEventListener('touchmove', this.boundOnVolumeDrag);
+                document.removeEventListener('touchend', this.boundEndVolumeDrag);
+            },
+
+            updateVolumeDragPosition(event, enigmaId) {
+                const bar = document.getElementById(`audio-volume-bar-${enigmaId}`);
+                if (!bar) return;
+
+                const rect = bar.getBoundingClientRect();
+                const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+                let posX = clientX - rect.left;
+
+                posX = Math.max(0, Math.min(posX, rect.width));
+                const percentage = Math.round((posX / rect.width) * 100);
+
+                this.setAudioVolume(enigmaId, percentage);
+            },
+
+            updateAudioProgress(enigmaId) {
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                const progressBar = document.getElementById(`audio-progress-${enigmaId}`);
+                const timeDisplay = document.getElementById(`audio-time-${enigmaId}`);
+
+                if (!audio || !progressBar) return;
+
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = progress + '%';
+
+                if (timeDisplay) {
+                    const currentMins = Math.floor(audio.currentTime / 60);
+                    const currentSecs = Math.floor(audio.currentTime % 60);
+                    const totalMins = Math.floor(audio.duration / 60) || 0;
+                    const totalSecs = Math.floor(audio.duration % 60) || 0;
+                    timeDisplay.textContent = `${currentMins}:${currentSecs.toString().padStart(2, '0')} / ${totalMins}:${totalSecs.toString().padStart(2, '0')}`;
+                }
+            },
+
+            onAudioLoaded(enigmaId) {
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                const timeDisplay = document.getElementById(`audio-time-${enigmaId}`);
+                const timeline = document.getElementById(`audio-timeline-${enigmaId}`);
+                const handle = document.getElementById(`audio-handle-${enigmaId}`);
+
+                if (audio && timeDisplay) {
+                    const totalMins = Math.floor(audio.duration / 60);
+                    const totalSecs = Math.floor(audio.duration % 60);
+                    timeDisplay.textContent = `0:00 / ${totalMins}:${totalSecs.toString().padStart(2, '0')}`;
+                }
+
+                // Show handle on hover - Timeline
+                if (timeline && handle) {
+                    timeline.addEventListener('mouseenter', () => handle.style.opacity = '1');
+                    timeline.addEventListener('mouseleave', () => {
+                        if (!this.isDragging) handle.style.opacity = '0';
+                    });
+                }
+
+                // Show handle on hover - Volume bar
+                const volumeBar = document.getElementById(`audio-volume-bar-${enigmaId}`);
+                const volumeHandle = document.getElementById(`audio-volume-handle-${enigmaId}`);
+                if (volumeBar && volumeHandle) {
+                    volumeBar.addEventListener('mouseenter', () => volumeHandle.style.opacity = '1');
+                    volumeBar.addEventListener('mouseleave', () => {
+                        if (!this.isVolumeDragging) volumeHandle.style.opacity = '0';
+                    });
+                }
+
+                // Initialize volume
+                this.audioVolumes[enigmaId] = 70;
+                if (audio) audio.volume = 0.7;
+            },
+
+            // Drag state
+            isDragging: false,
+            dragEnigmaId: null,
+
+            startDrag(event, enigmaId) {
+                event.preventDefault();
+                this.isDragging = true;
+                this.dragEnigmaId = enigmaId;
+
+                const handle = document.getElementById(`audio-handle-${enigmaId}`);
+                if (handle) handle.style.opacity = '1';
+
+                // Set initial position
+                this.updateDragPosition(event, enigmaId);
+
+                // Add listeners
+                document.addEventListener('mousemove', this.boundOnDrag);
+                document.addEventListener('mouseup', this.boundEndDrag);
+                document.addEventListener('touchmove', this.boundOnDrag, { passive: false });
+                document.addEventListener('touchend', this.boundEndDrag);
+            },
+
+            onDrag(event) {
+                if (!this.isDragging || !this.dragEnigmaId) return;
+                event.preventDefault();
+                this.updateDragPosition(event, this.dragEnigmaId);
+            },
+
+            endDrag(event) {
+                if (!this.isDragging) return;
+
+                const handle = document.getElementById(`audio-handle-${this.dragEnigmaId}`);
+                const timeline = document.getElementById(`audio-timeline-${this.dragEnigmaId}`);
+
+                // Hide handle if not hovering
+                if (handle && timeline) {
+                    const rect = timeline.getBoundingClientRect();
+                    const clientX = event.clientX || (event.changedTouches && event.changedTouches[0].clientX);
+                    const clientY = event.clientY || (event.changedTouches && event.changedTouches[0].clientY);
+
+                    if (clientX < rect.left || clientX > rect.right || clientY < rect.top - 10 || clientY > rect.bottom + 10) {
+                        handle.style.opacity = '0';
+                    }
+                }
+
+                this.isDragging = false;
+                this.dragEnigmaId = null;
+
+                // Remove listeners
+                document.removeEventListener('mousemove', this.boundOnDrag);
+                document.removeEventListener('mouseup', this.boundEndDrag);
+                document.removeEventListener('touchmove', this.boundOnDrag);
+                document.removeEventListener('touchend', this.boundEndDrag);
+            },
+
+            updateDragPosition(event, enigmaId) {
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                const timeline = document.getElementById(`audio-timeline-${enigmaId}`);
+                const progressBar = document.getElementById(`audio-progress-${enigmaId}`);
+
+                if (!audio || !timeline || !audio.duration) return;
+
+                const rect = timeline.getBoundingClientRect();
+                const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+                let posX = clientX - rect.left;
+
+                // Clamp to timeline bounds
+                posX = Math.max(0, Math.min(posX, rect.width));
+
+                const percentage = posX / rect.width;
+                audio.currentTime = percentage * audio.duration;
+
+                // Update visual immediately
+                if (progressBar) {
+                    progressBar.style.width = (percentage * 100) + '%';
+                }
+                this.updateAudioProgress(enigmaId);
+            },
+
+            onAudioEnded(enigmaId) {
+                const btn = document.getElementById(`audio-btn-${enigmaId}`);
+                if (btn) btn.textContent = '▶️';
+                this.audioPlaying[enigmaId] = false;
+                this.stopMorse(enigmaId);
+            },
+
+            // ========== MORSE CONFIG ==========
+            // Modifie ces paramètres pour ajuster le morse
+            MORSE_CONFIG: {
+                frequency: 650,        // Fréquence du bip (Hz) - 400=grave, 600=medium, 800=aigu
+                volume: 0.01,         // Volume du morse (0-1) - 0.08=subtil, 0.15=medium, 0.25=fort
+                dotDuration: 50,           // Durée d'un point (ms)
+                dashDuration: 500,      // Durée d'un trait (ms)
+                symbolGap: 400,        //  Pause entre symboles (ms)
+                letterGap: 15000,       // Pause entre lettres (ms)
+                startDelay: 20000,      // Délai avant le 1er morse (ms)},
+            },
+            // Message obfusqué (ne pas modifier directement)
+            // Pour changer le message, utilise: btoa('NOUVEAU_MESSAGE') dans la console
+            _m: 'S09NQlVDSEE=',
+            _mc: 'LS4tIC0tLSAtLSAtLi4uIC4uLSAtLi0uIC4uLi4gLi0=',
+
+            // Décode le morse
+            _d: function () { return atob(this._mc); },
+
+            audioContext: null,
+
+            async playMorseTone(duration) {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = this.MORSE_CONFIG.frequency;
+                oscillator.type = 'sine';
+
+                const vol = this.MORSE_CONFIG.volume;
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + (duration / 1000) - 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + (duration / 1000));
+
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + (duration / 1000));
+
+                return new Promise(resolve => setTimeout(resolve, duration));
+            },
+
+            async playMorseMessage(enigmaId) {
+                if (!this.audioPlaying[enigmaId]) return;
+
+                // Décode et joue le morse
+                const morse = this._d();
+
+                for (const symbol of morse) {
+                    if (!this.audioPlaying[enigmaId]) return;
+
+                    if (symbol === '.') {
+                        await this.playMorseTone(this.MORSE_CONFIG.dotDuration);
+                        await new Promise(r => setTimeout(r, this.MORSE_CONFIG.symbolGap));
+                    } else if (symbol === '-') {
+                        await this.playMorseTone(this.MORSE_CONFIG.dashDuration);
+                        await new Promise(r => setTimeout(r, this.MORSE_CONFIG.symbolGap));
+                    } else if (symbol === ' ') {
+                        await new Promise(r => setTimeout(r, this.MORSE_CONFIG.letterGap));
+                    }
+                }
+            },
+
+            startMorse(enigmaId) {
+                setTimeout(() => {
+                    if (this.audioPlaying[enigmaId]) {
+                        this.playMorseMessage(enigmaId);
+
+                        if (this.audioPlaying[enigmaId]) {
+                            this.playMorseMessage(enigmaId);
+                        }
+
+                    }
+                }, this.MORSE_CONFIG.startDelay);
+            },
+
+            stopMorse(enigmaId) {
+                if (this.morseIntervals[enigmaId]) {
+                    clearInterval(this.morseIntervals[enigmaId]);
+                    delete this.morseIntervals[enigmaId];
+                }
+            },
+
             async giveUp(enigmaId) {
                 // Confirmation
-                if (!confirm('⚠️ Tu vas perdre 25 points et voir la solution.\n\nL\'énigme sera validée et tu pourras passer à la suivante.\n\nConfirmer ?')) {
+                if (!confirm('⚠️ Tu vas perdre 50 points et voir la solution.\n\nL\'énigme sera validée et tu pourras passer à la suivante.\n\nConfirmer ?')) {
                     return;
                 }
 
@@ -2865,6 +3350,13 @@
                     } else {
                         // Auto validation
                         if (isCorrect) {
+                            // Check if progress exists
+                            if (!progress || !progress.id) {
+                                console.error('Progress is null or has no ID:', progress);
+                                showToast('❌ Erreur : progression non trouvée', 'error');
+                                return;
+                            }
+
                             // Anti-IA detection: correct answer in less than 10 minutes
                             const progressCreated = new Date(progress.started_at || progress.created_at);
                             const now = new Date();
@@ -3560,6 +4052,21 @@
                     document.getElementById('enigmaHint3').value = enigma.hint3 || '';
                     document.getElementById('enigmaPublished').checked = enigma.published;
 
+                    // Audio setup
+                    audioToRemove = false;
+                    const hasAudio = !!enigma.audio_url;
+                    document.getElementById('enigmaHasAudio').checked = hasAudio;
+                    document.getElementById('audioUploadSection').style.display = hasAudio ? 'block' : 'none';
+                    document.getElementById('enigmaAudioFile').value = '';
+
+                    if (hasAudio) {
+                        document.getElementById('currentAudioUrl').style.display = 'block';
+                        document.getElementById('currentAudioLink').href = enigma.audio_url;
+                        document.getElementById('currentAudioLink').textContent = enigma.audio_url.split('/').pop();
+                    } else {
+                        document.getElementById('currentAudioUrl').style.display = 'none';
+                    }
+
                     if (enigma.scheduled_at) {
                         // Convert to Paris time for the datetime-local input
                         const parisDate = toParisTime(enigma.scheduled_at);
@@ -3604,10 +4111,10 @@
                 }
 
                 try {
-                    // Get current enigma to preserve QR secret
+                    // Get current enigma to preserve QR secret and audio
                     const { data: currentEnigma } = await supabase
                         .from('enigmas')
-                        .select('qr_secret')
+                        .select('qr_secret, audio_url')
                         .eq('id', enigmaId)
                         .single();
 
@@ -3617,12 +4124,24 @@
                         qrSecret = 'HDN-E' + enigmaId + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
                     }
 
+                    // Handle audio upload
+                    let audioUrl = currentEnigma?.audio_url || null;
+                    const audioFile = document.getElementById('enigmaAudioFile').files[0];
+
+                    if (audioToRemove) {
+                        audioUrl = null;
+                    } else if (audioFile) {
+                        showToast('📤 Upload de l\'audio en cours...', 'info');
+                        audioUrl = await this.uploadAudio(audioFile, enigmaId);
+                    }
+
                     const { error } = await supabase
                         .from('enigmas')
                         .update({
                             title: title,
                             description: description,
                             image_url: imageUrl || null,
+                            audio_url: audioUrl,
                             answer: answer,
                             location: location,
                             qr_secret: qrSecret,
@@ -3642,6 +4161,7 @@
                     // Reset form
                     this.resetEnigmaForm();
                     document.getElementById('enigmaSchedule').value = '';
+                    audioToRemove = false;
 
                     // Change button back
                     const btn = document.querySelector('#admin-section .btn-success');
@@ -3655,6 +4175,27 @@
                     console.error('Error:', error);
                     showToast('❌ Erreur lors de la mise à jour : ' + error.message, 'error');
                 }
+            },
+
+            // Upload audio to Supabase Storage
+            async uploadAudio(file, enigmaId) {
+                const fileName = `enigma-${enigmaId}-${Date.now()}.mp3`;
+
+                const { data, error } = await supabase.storage
+                    .from('audio')
+                    .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+
+                if (error) throw error;
+
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('audio')
+                    .getPublicUrl(fileName);
+
+                return urlData.publicUrl;
             },
 
             async createEnigma() {
@@ -3690,7 +4231,8 @@
                     // Generate QR secret automatically
                     const qrSecret = 'HDN-E' + nextNumber + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
 
-                    const { error } = await supabase
+                    // Create enigma first
+                    const { data: newEnigma, error } = await supabase
                         .from('enigmas')
                         .insert([{
                             number: nextNumber,
@@ -3706,15 +4248,31 @@
                             qr_secret: qrSecret,
                             published: published,
                             scheduled_at: this.convertLocalToUTC(schedule)
-                        }]);
+                        }])
+                        .select()
+                        .single();
 
                     if (error) throw error;
+
+                    // Handle audio upload if present
+                    const audioFile = document.getElementById('enigmaAudioFile').files[0];
+                    if (audioFile && document.getElementById('enigmaHasAudio').checked) {
+                        showToast('📤 Upload de l\'audio en cours...', 'info');
+                        const audioUrl = await this.uploadAudio(audioFile, newEnigma.id);
+
+                        // Update enigma with audio URL
+                        await supabase
+                            .from('enigmas')
+                            .update({ audio_url: audioUrl })
+                            .eq('id', newEnigma.id);
+                    }
 
                     showToast(`✅ Énigme #${nextNumber} créée !\n\nCode QR: ${qrSecret}`, 'success');
 
                     // Reset form
                     this.resetEnigmaForm();
                     document.getElementById('enigmaSchedule').value = '';
+                    audioToRemove = false;
 
                     // Reload list
                     await this.loadAdminEnigmas();
@@ -3736,6 +4294,13 @@
                 document.getElementById('enigmaHint2').value = '';
                 document.getElementById('enigmaHint3').value = '';
                 document.getElementById('enigmaPublished').checked = false;
+
+                // Reset audio fields
+                document.getElementById('enigmaHasAudio').checked = false;
+                document.getElementById('audioUploadSection').style.display = 'none';
+                document.getElementById('enigmaAudioFile').value = '';
+                document.getElementById('currentAudioUrl').style.display = 'none';
+                audioToRemove = false;
             },
 
             async loadPendingValidations() {
@@ -3845,7 +4410,7 @@
 
             // ========== EMAIL NOTIFICATIONS ==========
 
-            WORKER_URL: 'https://hdn-mailer.hdn-chistmasproject.workers.dev/',
+            WORKER_URL: 'https://hdn-mailer.arthurbdn.workers.dev',
 
             async showNotifyModal(enigmaId, enigmaNumber, enigmaTitle) {
                 showToast('⏳ Analyse des joueurs...', 'info');
