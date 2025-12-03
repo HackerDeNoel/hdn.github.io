@@ -805,16 +805,6 @@
         .password-toggle:hover {
             opacity: 1;
         }
-
-        .audio-player {
-            flex-flow: column nowrap;
-        }
-
-        @media screen and (min-width: 961px) {
-            .audio-player {
-            flex-flow: row nowrap;
-        }
-        }
     </style>
 </head>
 
@@ -2473,10 +2463,10 @@
                                             style="background: #81FE0E; border: none; color: #000; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                         ▶️
                                     </button>
-                                    <div style="flex-grow: 1; width: 100%;">
+                                    <div style="flex-grow: 1;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="color: #81FE0E; font-size: 12px;">🎵</span>
-                                            <span style="color: #fff; font-size: 13px;">Bouge ton corps</span>
+                                            <span style="color: #fff; font-size: 13px;">Message audio</span>
                                             <span id="audio-time-${enigma.id}" style="color: #888; font-size: 11px; margin-left: auto;">0:00 / 0:00</span>
                                         </div>
                                         <div id="audio-timeline-${enigma.id}" 
@@ -2493,7 +2483,7 @@
                                         <div id="audio-volume-bar-${enigma.id}" 
                                              onmousedown="hdnApp.startVolumeDrag(event, ${enigma.id})"
                                              ontouchstart="hdnApp.startVolumeDrag(event, ${enigma.id})"
-                                             style="background: #333; border-radius: 4px; height: 4px; width: 100px; cursor: pointer; position: relative;">
+                                             style="background: #333; border-radius: 4px; height: 4px; width: 60px; cursor: pointer; position: relative;">
                                             <div id="audio-volume-progress-${enigma.id}" style="background: linear-gradient(90deg, #81FE0E, #4ade80); height: 100%; width: 70%; border-radius: 4px; pointer-events: none; position: relative;">
                                                 <div id="audio-volume-handle-${enigma.id}" style="position: absolute; right: -5px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s;"></div>
                                             </div>
@@ -2814,7 +2804,6 @@
 
             // ========== AUDIO PLAYER CONTROLS ==========
             audioPlaying: {},
-            morseIntervals: {},
 
             toggleAudioPlayer(enigmaId) {
                 const audio = document.getElementById(`audio-element-${enigmaId}`);
@@ -2971,6 +2960,9 @@
                     const totalSecs = Math.floor(audio.duration % 60) || 0;
                     timeDisplay.textContent = `${currentMins}:${currentSecs.toString().padStart(2, '0')} / ${totalMins}:${totalSecs.toString().padStart(2, '0')}`;
                 }
+
+                // Check morse cue points
+                this.checkMorseCuePoints(enigmaId, audio.currentTime);
             },
 
             onAudioLoaded(enigmaId) {
@@ -3039,8 +3031,9 @@
             endDrag(event) {
                 if (!this.isDragging) return;
 
-                const handle = document.getElementById(`audio-handle-${this.dragEnigmaId}`);
-                const timeline = document.getElementById(`audio-timeline-${this.dragEnigmaId}`);
+                const enigmaId = this.dragEnigmaId; // Save before reset
+                const handle = document.getElementById(`audio-handle-${enigmaId}`);
+                const timeline = document.getElementById(`audio-timeline-${enigmaId}`);
 
                 // Hide handle if not hovering
                 if (handle && timeline) {
@@ -3061,6 +3054,11 @@
                 document.removeEventListener('mouseup', this.boundEndDrag);
                 document.removeEventListener('touchmove', this.boundOnDrag);
                 document.removeEventListener('touchend', this.boundEndDrag);
+
+                // Restart morse timer after seeking
+                if (enigmaId) {
+                    this.restartMorse(enigmaId);
+                }
             },
 
             updateDragPosition(event, enigmaId) {
@@ -3098,13 +3096,18 @@
             // Modifie ces paramètres pour ajuster le morse
             MORSE_CONFIG: {
                 frequency: 650,        // Fréquence du bip (Hz) - 400=grave, 600=medium, 800=aigu
-                volume: 0.01,         // Volume du morse (0-1) - 0.08=subtil, 0.15=medium, 0.25=fort
-                dotDuration: 50,           // Durée d'un point (ms)
-                dashDuration: 500,      // Durée d'un trait (ms)
-                symbolGap: 400,        //  Pause entre symboles (ms)
-                letterGap: 15000,       // Pause entre lettres (ms)
-                startDelay: 20000,      // Délai avant le 1er morse (ms)},
+                volume: 0.015,          // Volume du morse (0-1) - 0.08=subtil, 0.15=medium, 0.25=fort
+                dotDuration: 50,       // Durée d'un point (ms)
+                dashDuration: 500,     // Durée d'un trait (ms)
+                symbolGap: 400,        // Pause entre symboles (ms)
+                letterGap: 15000,      // Pause entre lettres (ms) - 15s
             },
+
+            // ========== MORSE CUE POINT ==========
+            // Moment (en secondes) où le morse COMPLET doit commencer
+            // Le message entier se jouera avec les pauses entre lettres configurées ci-dessus
+            MORSE_START_TIME: 20,  // Le morse commence à 20s dans l'audio
+
             // Message obfusqué (ne pas modifier directement)
             // Pour changer le message, utilise: btoa('NOUVEAU_MESSAGE') dans la console
             _m: 'S09NQlVDSEE=',
@@ -3114,10 +3117,18 @@
             _d: function () { return atob(this._mc); },
 
             audioContext: null,
+            morsePlaying: {},           // Track if morse is currently playing for each enigma
+            morseTriggered: {},         // Track if morse was already triggered for this playback
+            morseEnabled: {},           // Track if morse is enabled for each enigma
 
-            async playMorseTone(duration) {
+            async playMorseTone(duration, enigmaId) {
                 if (!this.audioContext) {
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                // Resume context if suspended (browser autoplay policy)
+                if (this.audioContext.state === 'suspended') {
+                    await this.audioContext.resume();
                 }
 
                 const oscillator = this.audioContext.createOscillator();
@@ -3129,7 +3140,12 @@
                 oscillator.frequency.value = this.MORSE_CONFIG.frequency;
                 oscillator.type = 'sine';
 
-                const vol = this.MORSE_CONFIG.volume;
+                // Use music volume if available, otherwise use config
+                const musicVolume = this.audioVolumes[enigmaId] ?? 70;
+                const baseVol = this.MORSE_CONFIG.volume;
+                // Scale morse volume with music volume (0-100 -> 0-1)
+                const vol = baseVol * (musicVolume / 70); // 70 is default volume
+
                 gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
                 gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.01);
                 gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + (duration / 1000) - 0.01);
@@ -3142,43 +3158,67 @@
             },
 
             async playMorseMessage(enigmaId) {
-                if (!this.audioPlaying[enigmaId]) return;
+                if (this.morsePlaying[enigmaId]) return; // Already playing
+                if (!this.audioPlaying[enigmaId]) return; // Audio stopped
+
+                this.morsePlaying[enigmaId] = true;
+                console.log(`🔊 Morse message started at ${this.MORSE_START_TIME}s`);
 
                 // Décode et joue le morse
                 const morse = this._d();
 
                 for (const symbol of morse) {
-                    if (!this.audioPlaying[enigmaId]) return;
+                    // Check if we should stop
+                    if (!this.audioPlaying[enigmaId]) {
+                        this.morsePlaying[enigmaId] = false;
+                        return;
+                    }
 
                     if (symbol === '.') {
-                        await this.playMorseTone(this.MORSE_CONFIG.dotDuration);
+                        await this.playMorseTone(this.MORSE_CONFIG.dotDuration, enigmaId);
                         await new Promise(r => setTimeout(r, this.MORSE_CONFIG.symbolGap));
                     } else if (symbol === '-') {
-                        await this.playMorseTone(this.MORSE_CONFIG.dashDuration);
+                        await this.playMorseTone(this.MORSE_CONFIG.dashDuration, enigmaId);
                         await new Promise(r => setTimeout(r, this.MORSE_CONFIG.symbolGap));
                     } else if (symbol === ' ') {
                         await new Promise(r => setTimeout(r, this.MORSE_CONFIG.letterGap));
                     }
                 }
+
+                console.log(`🔊 Morse message finished`);
+                this.morsePlaying[enigmaId] = false;
+            },
+
+            // Called on every timeupdate - check if we hit the morse start time
+            checkMorseCuePoints(enigmaId, currentTime) {
+                if (!this.morseEnabled[enigmaId]) return;
+                if (this.morsePlaying[enigmaId]) return; // Already playing morse
+                if (this.morseTriggered[enigmaId]) return; // Already triggered this playback
+
+                // Check if we've reached the start time (with 0.5s tolerance)
+                if (currentTime >= this.MORSE_START_TIME && currentTime < this.MORSE_START_TIME + 0.5) {
+                    this.morseTriggered[enigmaId] = true;
+                    this.playMorseMessage(enigmaId);
+                }
             },
 
             startMorse(enigmaId) {
-                setTimeout(() => {
-                    if (this.audioPlaying[enigmaId]) {
-                        this.playMorseMessage(enigmaId);
-
-                        if (this.audioPlaying[enigmaId]) {
-                            this.playMorseMessage(enigmaId);
-                        }
-
-                    }
-                }, this.MORSE_CONFIG.startDelay);
+                this.morseEnabled[enigmaId] = true;
+                this.morseTriggered[enigmaId] = false;
+                console.log(`🎵 Morse enabled for enigma ${enigmaId} - will start at ${this.MORSE_START_TIME}s`);
             },
 
             stopMorse(enigmaId) {
-                if (this.morseIntervals[enigmaId]) {
-                    clearInterval(this.morseIntervals[enigmaId]);
-                    delete this.morseIntervals[enigmaId];
+                this.morseEnabled[enigmaId] = false;
+                this.morsePlaying[enigmaId] = false;
+                this.morseTriggered[enigmaId] = false;
+            },
+
+            restartMorse(enigmaId) {
+                // Reset so morse can re-trigger if user seeks before the start time
+                const audio = document.getElementById(`audio-element-${enigmaId}`);
+                if (audio && audio.currentTime < this.MORSE_START_TIME) {
+                    this.morseTriggered[enigmaId] = false;
                 }
             },
 
