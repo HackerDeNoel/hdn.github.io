@@ -807,17 +807,13 @@
         }
 
         .audio-player {
-            display: flex;
             flex-flow: column nowrap;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
         }
 
-        @media screen and (min-width: 768px) {
+        @media screen and (min-width: 961px) {
             .audio-player {
-                flex-flow: row nowrap;
-            }
+            flex-flow: row nowrap;
+        }
         }
     </style>
 </head>
@@ -2480,7 +2476,7 @@
                                     <div style="flex-grow: 1; width: 100%;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="color: #81FE0E; font-size: 12px;">🎵</span>
-                                            <span style="color: #fff; font-size: 13px;">Message audio</span>
+                                            <span style="color: #fff; font-size: 13px;">Bouge ton corps</span>
                                             <span id="audio-time-${enigma.id}" style="color: #888; font-size: 11px; margin-left: auto;">0:00 / 0:00</span>
                                         </div>
                                         <div id="audio-timeline-${enigma.id}" 
