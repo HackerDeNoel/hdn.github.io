@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Épreuve Finale - HDN Christmas 2025</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- Supabase pour la validation du token -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-color: #000000;
+      --card-bg: #ffffff;
+      --accent-color: #81FE0E;
+      --button-color: #343973;
+      --text-dark: #000000;
+      --text-light: #ffffff;
+      --danger-color: #dc2626;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      background: var(--bg-color);
+    }
+
+    #gameCanvas {
+      display: block;
+      margin: 20px auto;
+      background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%);
+      border: 3px solid var(--button-color);
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #ui {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      padding: 15px 30px;
+      border-radius: 15px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+    }
+
+    #lives {
+      font-size: 24px;
+    }
+
+    #level {
+      font-weight: bold;
+      font-size: 16px;
+      color: var(--text-dark);
+    }
+
+    #timer {
+      font-weight: bold;
+      color: var(--button-color) !important;
+    }
+
+    #points {
+      font-weight: bold;
+      color: var(--accent-color) !important;
+    }
+
+    button {
+      width: fit-content;
+      height: auto;
+      padding: 15px 25px;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .btn-primary {
+      background: var(--button-color);
+      color: var(--text-light);
+    }
+
+    .btn-accent {
+      background: var(--accent-color);
+      color: var(--text-dark);
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+      color: var(--text-light);
+    }
+
+    #menu {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 25px;
+      color: var(--text-light);
+      text-align: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    #menu h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent-color) 0%, #4ade80 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+    }
+
+    #menu h1 span {
+      display: block;
+      font-size: 18px;
+      color: var(--text-light);
+      -webkit-text-fill-color: var(--text-light);
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #instructions {
+      background: var(--card-bg);
+      color: var(--text-dark);
+      padding: 25px;
+      border-radius: 15px;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #instructions h2 {
+      color: var(--button-color);
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    #instructions p {
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    #colorPicker {
+      background: var(--card-bg) !important;
+      color: var(--text-dark);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #colorPicker h2 {
+      color: var(--button-color);
+    }
+
+    #colorPicker button {
+      padding: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+    }
+
+    /* Tutoriel - Machine à écrire */
+    #tutorial-overlay {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid var(--button-color);
+      border-radius: 15px;
+      padding: 20px 30px;
+      max-width: 600px;
+      z-index: 500;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #tutorial-text {
+      color: var(--text-light);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    #tutorial-text .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 20px;
+      background: var(--accent-color);
+      margin-left: 2px;
+      animation: blink 0.7s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Écran mobile */
+    #mobile-block {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      color: var(--text-light);
+      text-align: center;
+      padding: 30px;
+      z-index: 9999;
+    }
+
+    #mobile-block h2 {
+      font-size: 28px;
+      color: var(--accent-color);
+    }
+
+    #mobile-block p {
+      font-size: 16px;
+      opacity: 0.8;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+
+    #mobile-block .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+
+    /* Mobile controls - cachés par défaut */
+    #mobileControls {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      #menu, #ui, #gameCanvas, #tutorial-overlay {
+        display: none !important;
+      }
+      #mobile-block {
+        display: flex !important;
+      }
+    }
+
+    @media (min-width: 901px) {
+      #mobile-block {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Écran de blocage mobile -->
+  <div id="mobile-block">
+    <div class="icon">💻</div>
+    <h2>Épreuve sur ordinateur uniquement</h2>
+    <p>Cette épreuve nécessite un clavier pour jouer. Ouvre cette page sur un ordinateur pour participer !</p>
+    <p style="margin-top:15px;font-size:14px;opacity:0.6;">Utilise les flèches directionnelles ou les touches ZQSD pour
+      te déplacer.</p>
+  </div>
+
+  <div id="menu">
+    <h1>🎯 ÉPREUVE FINALE<span>HDN Christmas 2025</span></h1>
+    <div id="instructions">
+      <h2>🎮 Comment jouer</h2>
+      <p>⬅️ ➡️ Flèches ou A/D pour se déplacer</p>
+      <p>⬆️ Flèche haut ou W/Z pour sauter</p>
+      <p>🏆 Complétez les 12 niveaux le plus vite possible</p>
+      <p style="margin-top:15px;color:#81FE0E;font-weight:bold;">💡 Collectez les indices cachés pour l'énigme finale !
+      </p>
+    </div>
+    <div id="colorPicker" style="padding:25px;border-radius:15px;margin-top:15px;">
+      <h2 style="margin-bottom:15px;font-size:16px;">Choisissez votre couleur</h2>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="selectColor('#81FE0E')" style="background:#81FE0E;border:3px solid #343973;"></button>
+        <button onclick="selectColor('#FFD700')" style="background:#FFD700;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#FF69B4')" style="background:#FF69B4;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#00CED1')" style="background:#00CED1;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#FF8C00')" style="background:#FF8C00;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#9370DB')" style="background:#9370DB;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#FF4500')" style="background:#FF4500;border:3px solid transparent;"></button>
+        <button onclick="selectColor('#1E90FF')" style="background:#1E90FF;border:3px solid transparent;"></button>
+      </div>
+    </div>
+    <div style="display:flex;gap:15px;margin-top:20px;flex-wrap:wrap;justify-content:center;">
+      <button id="tutorialBtn" onclick="startTutorial()" class="btn-primary" style="padding:15px 30px;font-size:16px;">
+        📖 Tutoriel
+      </button>
+      <button id="startBtn" onclick="startGame()" class="btn-primary" style="padding:18px 40px;font-size:18px;">
+        Commencer 🚀
+      </button>
+    </div>
+    <button id="continueBtn" onclick="startGame()" class="btn-accent" style="margin-top:10px;display:none;">
+      Continuer la partie ▶️
+    </button>
+    <p id="sessionInfo" style="margin-top:15px;font-size:12px;opacity:0.7;display:none;"></p>
+  </div>
+
+  <!-- Tutoriel overlay -->
+  <div id="tutorial-overlay" class="hidden">
+    <div id="tutorial-text"></div>
+  </div>
+
+  <div id="ui" class="hidden">
+    <div id="lives">❤️❤️❤️❤️❤️</div>
+    <div id="level">Niveau 1/12</div>
+    <div id="timer">⏱️ 00:00</div>
+    <div id="points">🏆 0 pts</div>
+  </div>
+  <canvas
+          id="gameCanvas"
+          width="1200"
+          height="700"
+          class="hidden"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ CONFIGURATION GLOBALE - POUR INTÉGRATION DANS L'APP HDN ███
+    // ═══════════════════════════════════════════════════════════════════
+    const GAME_CONFIG = {
+      // Infos générales
+      gameName: 'Épreuve Finale',
+      gameVersion: '1.0.0',
+
+      // Couleurs (DA HDN)
+      colors: {
+        background: '#000000',
+        accent: '#81FE0E',
+        button: '#343973',
+        cardBg: '#ffffff',
+        danger: '#dc2626'
+      },
+
+      // Gameplay
+      totalLevels: 12,
+      startingLives: 5,
+      defaultPlayerColor: '#81FE0E',
+
+      // Anti-triche
+      storageKey: 'hdn_epreuve_finale_session',
+      persistSession: true,  // Le chrono persiste même après refresh
+
+      // Callbacks pour l'intégration (à surcharger depuis l'app)
+      onGameStart: null,     // function(playerColor) {}
+      onLevelComplete: null, // function(level, time, clueCollected) {}
+      onGameComplete: null,  // function(totalTime, score, clues) {}
+      onDeath: null          // function(livesRemaining, currentLevel) {}
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ SUPABASE ET TOKEN DE SESSION ███
+    // ═══════════════════════════════════════════════════════════════════
+    const SUPABASE_URL = 'https://kjziudxhzbwhhnwvmlkt.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqeml1ZHhoemJ3aGhud3ZtbGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTg1MTIsImV4cCI6MjA3ODk3NDUxMn0.clKFjIPw6bO_-VI5epj1Fg7TlXUAAeqgYH4bCMS-uP4';
+
+    let supabase = null;
+    let gameToken = null;
+    let tokenValidated = false;
+
+    // Récupérer le token depuis l'URL
+    function getTokenFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token');
+    }
+
+    // Valider le token auprès de Supabase
+    async function validateToken(token) {
+      if (!token) return false;
+
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const { data, error } = await supabase.rpc('validate_game_token', {
+          p_token: token
+        });
+
+        if (error) {
+          console.error('Token validation error:', error);
+          return false;
+        }
+
+        return data && data.valid;
+      } catch (e) {
+        console.error('Token validation exception:', e);
+        return false;
+      }
+    }
+
+    // Envoyer le score à l'application parente
+    function sendScoreToParent(score, totalTimeMs) {
+      // Envoyer via postMessage à la fenêtre parente/opener
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'GAME_COMPLETE',
+          token: gameToken,
+          score: score,
+          totalTimeMs: totalTimeMs
+        }, '*');
+      }
+    }
+
+    let gameRunning = false;
+    let currentLevel = 1;
+    let lives = GAME_CONFIG.startingLives;
+    let collectedClues = [];
+    let playerColor = GAME_CONFIG.defaultPlayerColor;
+    let tempClueCollected = false;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ CONFIGURATION SCORING - BONUS TEMPS ███
+    // ═══════════════════════════════════════════════════════════════════
+    const SCORING = {
+      // Paliers de temps (en minutes) et bonus associés
+      // Le joueur reçoit le bonus du palier qu'il atteint
+      timeBonuses: [
+        { maxMinutes: 30, bonus: 200 },   // < 30 min = 200 pts
+        { maxMinutes: 45, bonus: 100 },   // < 45 min = 100 pts
+        { maxMinutes: 60, bonus: 50 },    // < 1h = 50 pts
+        { maxMinutes: 90, bonus: 0 }      // > 1h30 = 0 pts
+      ]
+    };
+
+    // Variables Timer et Points
+    let gameStartTime = 0;
+    let totalTime = 0;
+    let points = 0;
+    let levelStartTime = 0;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ SYSTÈME ANTI-TRICHE - LE CHRONO NE S'ARRÊTE JAMAIS ███
+    // ═══════════════════════════════════════════════════════════════════
+    const GAME_STORAGE_KEY = GAME_CONFIG.storageKey;
+
+    function saveGameState() {
+      const state = {
+        startTime: gameStartTime,
+        currentLevel: currentLevel,
+        lives: lives,
+        collectedClues: collectedClues,
+        playerColor: playerColor
+      };
+      localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadGameState() {
+      const saved = localStorage.getItem(GAME_STORAGE_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function clearGameState() {
+      localStorage.removeItem(GAME_STORAGE_KEY);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ SYSTÈME DE TUTORIEL - NIVEAUX DÉDIÉS ███
+    // ═══════════════════════════════════════════════════════════════════
+    let isTutorialMode = false;
+    let tutorialLevel = 0;
+
+    const TUTORIAL_CONFIG = {
+      typingSpeed: 30,        // ms entre chaque caractère
+      displayDuration: 6000,  // ms d'affichage après la fin de l'écriture
+
+      // ═══════════════════════════════════════════════════════════════════
+      // NIVEAUX DE TUTORIEL - AJOUTE/MODIFIE ICI TES NIVEAUX DE TUTO
+      // ═══════════════════════════════════════════════════════════════════
+      levels: [
+        {
+          message: "⬅️ ➡️ Utilise les flèches ou les touches A/D pour te déplacer. Atteins le drapeau vert ! 🏁",
+          width: 800,
+          height: 400,
+          platforms: [
+            { x: 0, y: 350, w: 800, h: 50 }  // Sol plat
+          ],
+          goal: { x: 700, y: 320 },
+          spawnX: 50,
+          spawnY: 300,
+          obstacles: []
+        },
+        {
+          message: "⬆️ Appuie sur la flèche HAUT ou W/Z pour sauter ! Saute sur les plateformes.",
+          width: 1000,
+          height: 500,
+          platforms: [
+            { x: 0, y: 450, w: 200, h: 50 },
+            { x: 300, y: 380, w: 150, h: 20 },
+            { x: 550, y: 300, w: 150, h: 20 },
+            { x: 800, y: 220, w: 200, h: 50 }
+          ],
+          goal: { x: 900, y: 190 },
+          spawnX: 50,
+          spawnY: 400,
+          obstacles: []
+        },
+        {
+          message: "🔴 Évite les obstacles rouges ! Ils te font perdre une vie et te renvoient au début du niveau.",
+          width: 1200,
+          height: 500,
+          platforms: [
+            { x: 0, y: 450, w: 300, h: 50 },
+            { x: 400, y: 450, w: 300, h: 50 },
+            { x: 800, y: 450, w: 400, h: 50 }
+          ],
+          goal: { x: 1100, y: 420 },
+          spawnX: 50,
+          spawnY: 400,
+          obstacles: [
+            { x: 320, y: 420, w: 60, h: 30 },
+            { x: 720, y: 420, w: 60, h: 30 }
+          ]
+        }
+      ]
+    };
+
+    let tutorialTimeout = null;
+    let tutorialTypingInterval = null;
+
+    function showTutorialMessage(message) {
+      const overlay = document.getElementById('tutorial-overlay');
+      const textEl = document.getElementById('tutorial-text');
+
+      if (tutorialTimeout) clearTimeout(tutorialTimeout);
+      if (tutorialTypingInterval) clearInterval(tutorialTypingInterval);
+
+      overlay.classList.remove('hidden');
+      textEl.innerHTML = '<span class="cursor"></span>';
+
+      let charIndex = 0;
+      tutorialTypingInterval = setInterval(() => {
+        if (charIndex < message.length) {
+          textEl.innerHTML = message.substring(0, charIndex + 1) + '<span class="cursor"></span>';
+          charIndex++;
+        } else {
+          clearInterval(tutorialTypingInterval);
+          setTimeout(() => {
+            textEl.innerHTML = message;
+          }, 500);
+          tutorialTimeout = setTimeout(() => {
+            overlay.classList.add('hidden');
+          }, TUTORIAL_CONFIG.displayDuration);
+        }
+      }, TUTORIAL_CONFIG.typingSpeed);
+    }
+
+    function hideTutorial() {
+      if (tutorialTimeout) clearTimeout(tutorialTimeout);
+      if (tutorialTypingInterval) clearInterval(tutorialTypingInterval);
+      document.getElementById('tutorial-overlay').classList.add('hidden');
+    }
+
+    function startTutorial() {
+      isTutorialMode = true;
+      tutorialLevel = 0;
+
+      document.getElementById('menu').classList.add('hidden');
+      document.getElementById('ui').classList.remove('hidden');
+      document.getElementById('gameCanvas').classList.remove('hidden');
+
+      // Afficher "TUTORIEL" au lieu du niveau
+      document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
+      document.getElementById('timer').textContent = '⏱️ --:--';
+      document.getElementById('points').textContent = '🏆 ---';
+
+      loadTutorialLevel();
+      gameRunning = true;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function loadTutorialLevel() {
+      const tutoLevel = TUTORIAL_CONFIG.levels[tutorialLevel];
+
+      player.x = tutoLevel.spawnX;
+      player.y = tutoLevel.spawnY;
+      player.velX = 0;
+      player.velY = 0;
+      player.grounded = false;
+      camera.x = 0;
+      camera.y = 0;
+
+      // Afficher le message du tutoriel
+      showTutorialMessage(tutoLevel.message);
+
+      document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
+    }
+
+    function nextTutorialLevel() {
+      tutorialLevel++;
+      if (tutorialLevel >= TUTORIAL_CONFIG.levels.length) {
+        // Fin du tutoriel
+        endTutorial();
+      } else {
+        loadTutorialLevel();
+      }
+    }
+
+    function endTutorial() {
+      isTutorialMode = false;
+      gameRunning = false;
+      hideTutorial();
+
+      document.getElementById('ui').classList.add('hidden');
+      document.getElementById('gameCanvas').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+
+      // Message de fin
+      const msg = document.createElement('div');
+      msg.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #343973; color: white; padding: 30px 50px;
+        border-radius: 15px; font-size: 20px; font-weight: bold; z-index: 9999;
+        text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        font-family: Orbitron, sans-serif;
+      `;
+      msg.innerHTML = '✅ Tutoriel terminé !<br><span style="font-size:14px;opacity:0.8;">Tu es prêt pour l\'épreuve finale !</span>';
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 2000);
+    }
+
+    // Fonction pour obtenir le niveau actuel (tutoriel ou jeu)
+    function getCurrentLevel() {
+      if (isTutorialMode) {
+        return TUTORIAL_CONFIG.levels[tutorialLevel];
+      }
+      return levels[currentLevel];
+    }
+
+    const player = {
+      x: 100,
+      y: 100,
+      width: 30,
+      height: 30,
+      velY: 0,
+      velX: 0,
+      jumping: false,
+      grounded: false
+    };
+
+    const camera = {
+      x: 0,
+      y: 0
+    };
+
+    const keys = {};
+    const gravity = 0.7;
+    const friction = .5;
+    const jumpPower = -15;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ CONFIGURATION WALL JUMP - MODIFIE ICI POUR CHANGER LE MODE ███
+    // ═══════════════════════════════════════════════════════════════════
+    const WALL_JUMP_CONFIG = {
+      // MODE: 'transformice' | 'mario' | 'celeste'
+      // - transformice: Simple, spam-friendly, HAUT = wall jump auto
+      // - mario: Technique, maintenir direction + opposée + HAUT
+      // - celeste: Stamina limitée, 3 grabs max avant de tomber
+      mode: 'mario',
+
+      // Physique du wall jump
+      wallSlideSpeed: 1,              // Vitesse de glissement sur le mur (0 = désactivé)
+      wallJumpForceX: 9,              // Impulsion horizontale lors du wall jump
+      wallJumpForceY: -15,            // Impulsion verticale (même que jumpPower par défaut)
+
+      // Tolérance et timing
+      coyoteTime: 80,                 // ms de tolérance après avoir quitté le mur
+      wallJumpCooldown: 0,            // ms entre 2 wall jumps (0 = spam autorisé)
+      inputBufferTime: 100,           // ms de buffer pour les inputs
+
+      // Options par mode
+      requireDirectionInput: true,   // true = style Mario (direction opposée requise)
+
+      // Mode Celeste uniquement
+      maxWallGrabs: 3,                // Nombre de grabs avant épuisement (mode celeste)
+      staminaRegenOnGround: true      // Régénérer la stamina au sol
+    };
+
+    // Variables internes pour le wall jump
+    let lastWallTouchTime = 0;
+    let lastWallSide = null; // 'left' ou 'right'
+    let lastWallJumpTime = 0;
+    let jumpKeyWasPressed = true;
+    let wallGrabCount = 0; // Pour le mode Celeste
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ MONDES - COULEURS CONFIGURABLES ███
+    // ═══════════════════════════════════════════════════════════════════
+    const worlds = {
+      1: { name: 'Zone 1', color: '#81FE0E', bgStart: '#1a1a2e', bgEnd: '#16213e' },
+      2: { name: 'Zone 2', color: '#4ade80', bgStart: '#0f172a', bgEnd: '#1e293b' },
+      3: { name: 'Zone 3', color: '#22d3ee', bgStart: '#0c1824', bgEnd: '#1e3a5f' },
+      4: { name: 'Zone 4', color: '#a78bfa', bgStart: '#1a0a2e', bgEnd: '#2d1b4e' }
+    };
+
+    const clueTexts = {
+      3: "Couleur préférée de HDN",
+      6: "C",
+      9: "🧭",
+      12: "XXV"
+    };
+
+    function selectColor(color) {
+      playerColor = color;
+      document.querySelectorAll('#colorPicker button').forEach(btn => {
+        btn.style.border = '3px solid transparent';
+        btn.style.transform = 'scale(1)';
+      });
+      event.target.style.border = '3px solid #343973';
+      event.target.style.transform = 'scale(1.15)';
+    }
+
+    // Niveaux redessinés avec chemins alternatifs
+    const levels = {
+
+      1: {
+        width: 1600,
+        height: 1000,
+        platforms: [
+          { x: 0, y: 950, w: 200, h: 50 },
+          { x: 100, y: 750, w: 120, h: 20 },
+          { x: 250, y: 850, w: 120, h: 20 },
+          { x: 300, y: 620, w: 170, h: 20 },
+          { x: 500, y: 520, w: 70, h: 20 },
+          { x: 700, y: 690, w: 100, h: 20 },
+          { x: 910, y: 610, w: 120, h: 20 },
+          { x: 1150, y: 530, w: 100, h: 20 },
+          { x: 1300, y: 400, w: 80, h: 20 },
+          { x: 1110, y: 330, w: 90, h: 20 }
+        ],
+        goal: { x: 1170, y: 300 },
+        spawnX: 50,
+        spawnY: 900
+      },
+      2: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1190, w: 200, h: 30 },
+          { x: 250, y: 1100, w: 100, h: 20 },
+          { x: 450, y: 1150, w: 130, h: 20 },
+          { x: 660, y: 1060, w: 100, h: 20 },
+          { x: 520, y: 950, w: 70, h: 20 },
+          { x: 310, y: 880, w: 130, h: 20 },
+          { x: 550, y: 760, w: 160, h: 20 },
+          { x: 850, y: 680, w: 100, h: 20 },
+          { x: 1100, y: 930, w: 100, h: 20 }
+        ],
+        goal: { x: 1150, y: 900 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      3: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1190, w: 210, h: 30 },
+          { x: 300, y: 1100, w: 50, h: 20 },
+          { x: 500, y: 1100, w: 150, h: 20 },
+          { x: 750, y: 1100, w: 30, h: 20 },
+          { x: 870, y: 1100, w: 30, h: 20 },
+          { x: 990, y: 1030, w: 60, h: 20 },
+          { x: 1150, y: 980, w: 200, h: 20 },
+          { x: 740, y: 890, w: 150, h: 20 }
+        ],
+        goal: { x: 1330, y: 950 },
+        clue: { x: 770, y: 850 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      4: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1170, w: 150, h: 40 },
+          { x: 220, y: 1070, w: 30, h: 100 },
+          { x: 370, y: 1070, w: 30, h: 100 },
+          { x: 500, y: 1030, w: 100, h: 20 },
+          { x: 680, y: 950, w: 20, h: 20 },
+          { x: 850, y: 1090, w: 200, h: 20 },
+          { x: 930, y: 1050, w: 20, h: 40 },
+          { x: 1010, y: 1010, w: 20, h: 80 },
+          { x: 1150, y: 1030, w: 150, h: 20 },
+          { x: 1250, y: 970, w: 50, h: 60 },
+          { x: 1350, y: 870, w: 90, h: 30 },
+          { x: 1200, y: 730, w: 100, h: 20 },
+          { x: 900, y: 630, w: 180, h: 20 },
+          { x: 900, y: 550, w: 50, h: 80 }
+        ],
+        obstacles: [
+          { x: 750, y: 920, w: 20, h: 80 },
+          { x: 970, y: 1020, w: 20, h: 70 },
+          { x: 1050, y: 970, w: 30, h: 140 },
+          { x: 950, y: 580, w: 60, h: 50 },
+          { x: 1220, y: 1000, w: 30, h: 30 },
+          { x: 290, y: 1050, w: 50, h: 20 }
+        ],
+        goal: { x: 930, y: 520 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      5: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1140, w: 180, h: 60 },
+          { x: 570, y: 940, w: 170, h: 20 },
+          { x: 150, y: 670, w: 20, h: 470 },
+          { x: 0, y: 530, w: 20, h: 470 },
+          { x: 170, y: 650, w: 130, h: 20 },
+          { x: 1060, y: 550, w: 140, h: 20 },
+          { x: 1300, y: 470, w: 140, h: 20 }
+        ],
+        obstacles: [
+          { x: 1240, y: 450, w: 20, h: 130 },
+          { x: 1820, y: 1010, w: 20, h: 90 },
+          { x: 1840, y: 1080, w: 100, h: 20 },
+          { x: 1940, y: 1010, w: 20, h: 90 },
+          { x: 0, y: 500, w: 20, h: 30 },
+          { x: 150, y: 650, w: 20, h: 20 },
+          { x: 630, y: 870, w: 50, h: 70 }
+        ],
+        trampolines: [
+          { x: 350, y: 980, w: 140, h: 20, angle: 0 },
+          { x: 820, y: 960, w: 140, h: 20, angle: 0 },
+          { x: 1490, y: 1080, w: 300, h: 20, angle: 0 }
+        ],
+        goal: { x: 1890, y: 1050 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      6: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1170, w: 120, h: 30 },
+          { x: 120, y: 670, w: 20, h: 250 },
+          { x: 270, y: 780, w: 180, h: 20 },
+          { x: 570, y: 730, w: 140, h: 20 },
+          { x: 470, y: 1120, w: 170, h: 30 },
+          { x: 250, y: 810, w: 20, h: 240 },
+          { x: 850, y: 780, w: 20, h: 390 }
+        ],
+        obstacles: [
+          { x: 120, y: 920, w: 20, h: 20 },
+          { x: 250, y: 1050, w: 20, h: 20 },
+          { x: 120, y: 650, w: 20, h: 20 },
+          { x: 350, y: 730, w: 30, h: 50 },
+          { x: 690, y: 750, w: 20, h: 200 },
+          { x: 250, y: 780, w: 20, h: 30 },
+          { x: 850, y: 750, w: 20, h: 30 },
+          { x: 460, y: 760, w: 100, h: 90 }
+        ],
+        goal: { x: 500, y: 1090 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      7: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1140, w: 150, h: 60 },
+          { x: 220, y: 910, w: 110, h: 20 },
+          { x: 150, y: 1140, w: 70, h: 20 },
+          { x: 100, y: 670, w: 100, h: 20 },
+          { x: 200, y: 930, w: 20, h: 210 },
+          { x: 310, y: 710, w: 20, h: 200 },
+          { x: 340, y: 610, w: 150, h: 20 },
+          { x: 690, y: 610, w: 20, h: 20 },
+          { x: 910, y: 610, w: 20, h: 20 },
+          { x: 1050, y: 530, w: 20, h: 20 },
+          { x: 1130, y: 470, w: 80, h: 20 },
+          { x: 1260, y: 380, w: 80, h: 20 },
+          { x: 1410, y: 300, w: 80, h: 20 },
+          { x: 1540, y: 200, w: 70, h: 20 },
+          { x: 1660, y: 140, w: 100, h: 20 },
+          { x: 1850, y: 140, w: 100, h: 20 },
+          { x: 1660, y: 90, w: 20, h: 50 },
+          { x: 1660, y: 0, w: 290, h: 30 },
+          { x: 1930, y: 30, w: 20, h: 110 },
+          { x: 1660, y: 160, w: 20, h: 1030 },
+          { x: 1930, y: 160, w: 20, h: 1030 },
+          { x: 1660, y: 1190, w: 290, h: 10 },
+          { x: 1840, y: 210, w: 20, h: 20 },
+          { x: 1780, y: 280, w: 20, h: 20 },
+          { x: 1680, y: 400, w: 20, h: 20 },
+          { x: 1750, y: 540, w: 20, h: 20 },
+          { x: 1820, y: 590, w: 20, h: 20 },
+          { x: 1870, y: 640, w: 20, h: 20 },
+          { x: 1800, y: 870, w: 20, h: 20 }
+        ],
+        obstacles: [
+          { x: 0, y: 670, w: 100, h: 20 },
+          { x: 200, y: 910, w: 20, h: 20 },
+          { x: 310, y: 690, w: 20, h: 20 },
+          { x: 970, y: 550, w: 20, h: 20 },
+          { x: 1200, y: 410, w: 20, h: 20 },
+          { x: 1330, y: 320, w: 20, h: 20 },
+          { x: 1480, y: 230, w: 20, h: 20 },
+          { x: 1620, y: 130, w: 20, h: 20 },
+          { x: 1820, y: 250, w: 20, h: 20 },
+          { x: 1750, y: 170, w: 20, h: 20 },
+          { x: 1880, y: 290, w: 20, h: 20 },
+          { x: 1740, y: 330, w: 20, h: 20 },
+          { x: 1700, y: 460, w: 20, h: 20 },
+          { x: 1750, y: 560, w: 20, h: 20 },
+          { x: 1850, y: 640, w: 20, h: 20 },
+          { x: 1800, y: 590, w: 20, h: 20 },
+          { x: 1710, y: 540, w: 20, h: 20 },
+          { x: 1700, y: 1100, w: 20, h: 20 },
+          { x: 1910, y: 820, w: 20, h: 20 },
+          { x: 1780, y: 1130, w: 20, h: 20 },
+          { x: 1870, y: 850, w: 20, h: 20 },
+          { x: 1830, y: 870, w: 20, h: 20 },
+          { x: 1700, y: 1130, w: 20, h: 20 },
+          { x: 1780, y: 1100, w: 20, h: 20 },
+          { x: 1780, y: 1070, w: 20, h: 20 },
+          { x: 1780, y: 1040, w: 20, h: 20 },
+          { x: 1700, y: 1070, w: 20, h: 20 },
+          { x: 1700, y: 1040, w: 20, h: 20 }
+        ],
+        trampolines: [
+          { x: 810, y: 1190, w: 30, h: 20, angle: 0 }
+        ],
+        goal: { x: 1750, y: 1170 },
+        clue: { x: 820, y: 1160 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      8: {
+        width: 2000,
+        height: 1200,
+        platforms: [
+          { x: 0, y: 1170, w: 200, h: 50 },
+          { x: 300, y: 750, w: 20, h: 450 },
+          { x: 0, y: 750, w: 150, h: 20 },
+          { x: 0, y: 400, w: 20, h: 350 },
+          { x: 250, y: 500, w: 100, h: 20 },
+          { x: 500, y: 400, w: 100, h: 20 },
+          { x: 1080, y: 350, w: 20, h: 670 },
+          { x: 1250, y: 350, w: 20, h: 670 },
+          { x: 1080, y: 1120, w: 190, h: 30 },
+          { x: 1080, y: 1020, w: 20, h: 100 },
+          { x: 1250, y: 1020, w: 20, h: 100 },
+          { x: 1100, y: 1020, w: 50, h: 20 },
+          { x: 1200, y: 1020, w: 50, h: 20 },
+          { x: 880, y: 150, w: 20, h: 150 },
+          { x: 900, y: 150, w: 100, h: 20 },
+          { x: 740, y: 300, w: 160, h: 20 }
+        ],
+        obstacles: [
+          { x: 300, y: 700, w: 20, h: 50 },
+          { x: 0, y: 370, w: 20, h: 30 },
+          { x: 1100, y: 350, w: 50, h: 670 },
+          { x: 1200, y: 350, w: 50, h: 670 },
+          { x: 1080, y: 330, w: 70, h: 20 },
+          { x: 1200, y: 330, w: 70, h: 20 }
+        ],
+        goal: { x: 1180, y: 1090 },
+        spawnX: 50,
+        spawnY: 1100
+      },
+      9: {
+        width: 2800,
+        height: 1300,
+        platforms: [
+          { x: 0, y: 1250, w: 250, h: 50 },
+          { x: 200, y: 1150, w: 100, h: 20 },
+          { x: 350, y: 1050, w: 80, h: 20 },
+          { x: 480, y: 950, w: 100, h: 20 },
+          { x: 630, y: 850, w: 80, h: 20 },
+          { x: 760, y: 750, w: 100, h: 20 },
+          { x: 910, y: 850, w: 80, h: 20 },
+          { x: 1040, y: 750, w: 100, h: 20 },
+          { x: 1190, y: 650, w: 80, h: 20 },
+          { x: 1320, y: 550, w: 100, h: 20 },
+          { x: 1470, y: 650, w: 80, h: 20 },
+          { x: 1600, y: 550, w: 100, h: 20 },
+          { x: 1750, y: 450, w: 80, h: 20 },
+          { x: 1880, y: 550, w: 100, h: 20 },
+          { x: 2030, y: 450, w: 80, h: 20 },
+          { x: 2160, y: 350, w: 100, h: 20 },
+          { x: 2310, y: 250, w: 80, h: 20 },
+          { x: 2440, y: 150, w: 250, h: 20 },
+          { x: 1100, y: 450, w: 90, h: 20 },
+          { x: 1240, y: 370, w: 100, h: 20 },
+          { x: 1100, y: 290, w: 90, h: 20 }
+        ],
+        goal: { x: 2550, y: 120 },
+        clue: { x: 1150, y: 260 },
+        spawnX: 50,
+        spawnY: 1200
+      },
+      10: {
+        width: 3000,
+        height: 1800,
+        platforms: [
+          { x: 0, y: 1750, w: 200, h: 50 },
+          { x: 260, y: 1700, w: 60, h: 20 },
+          { x: 440, y: 1640, w: 140, h: 20 },
+          { x: 810, y: 1350, w: 20, h: 200 },
+          { x: 720, y: 1550, w: 110, h: 20 },
+          { x: 1020, y: 1500, w: 110, h: 20 },
+          { x: 1210, y: 1610, w: 220, h: 20 },
+          { x: 1730, y: 1360, w: 20, h: 210 },
+          { x: 1640, y: 1570, w: 110, h: 20 },
+          { x: 1730, y: 1150, w: 20, h: 160 },
+          { x: 1960, y: 1190, w: 130, h: 20 }
+        ],
+        obstacles: [
+          { x: 160, y: 1530, w: 210, h: 20 },
+          { x: 490, y: 1430, w: 180, h: 20 },
+          { x: 810, y: 1330, w: 20, h: 20 },
+          { x: 1730, y: 1340, w: 20, h: 20 },
+          { x: 1730, y: 1310, w: 20, h: 20 },
+          { x: 1730, y: 1130, w: 20, h: 20 }
+        ],
+        goal: { x: 2020, y: 1160 },
+        spawnX: 50,
+        spawnY: 1700
+      },
+      11: {
+        width: 2600,
+        height: 1500,
+        platforms: [
+          { x: 0, y: 1450, w: 180, h: 50 },
+          { x: 130, y: 1350, w: 60, h: 20 },
+          { x: 230, y: 1250, w: 50, h: 20 },
+          { x: 320, y: 1150, w: 60, h: 20 },
+          { x: 420, y: 1050, w: 50, h: 20 },
+          { x: 510, y: 950, w: 60, h: 20 },
+          { x: 610, y: 850, w: 50, h: 20 },
+          { x: 700, y: 750, w: 60, h: 20 },
+          { x: 800, y: 650, w: 50, h: 20 },
+          { x: 890, y: 550, w: 60, h: 20 },
+          { x: 990, y: 450, w: 50, h: 20 },
+          { x: 1080, y: 350, w: 60, h: 20 },
+          { x: 1180, y: 450, w: 50, h: 20 },
+          { x: 1270, y: 550, w: 60, h: 20 },
+          { x: 1370, y: 450, w: 50, h: 20 },
+          { x: 1460, y: 350, w: 60, h: 20 },
+          { x: 1560, y: 250, w: 50, h: 20 },
+          { x: 1650, y: 150, w: 60, h: 20 },
+          { x: 1750, y: 50, w: 50, h: 20 },
+          { x: 1840, y: 150, w: 60, h: 20 },
+          { x: 1940, y: 250, w: 50, h: 20 },
+          { x: 2030, y: 150, w: 60, h: 20 },
+          { x: 2130, y: 50, w: 200, h: 20 },
+          { x: 850, y: 250, w: 90, h: 20 },
+          { x: 950, y: 170, w: 80, h: 20 },
+          { x: 850, y: 90, w: 90, h: 20 }
+        ],
+        goal: { x: 2240, y: 20 },
+        clue: { x: 900, y: 60 },
+        spawnX: 50,
+        spawnY: 1400
+      },
+      12: {
+        width: 2000,
+        height: 1200,
+        isDarkLevel: true,
+        disableWallJump: true,
+        platforms: [
+          { x: 1950, y: 550, w: 50, h: 650 },
+          { x: 1950, y: 0, w: 50, h: 560 },
+          { x: 450, y: 0, w: 1500, h: 50 },
+          { x: 0, y: 0, w: 450, h: 50 },
+          { x: 0, y: 550, w: 50, h: 650 },
+          { x: 0, y: 50, w: 50, h: 500 },
+          { x: 50, y: 1150, w: 1350, h: 50 },
+          { x: 1400, y: 1150, w: 550, h: 50 },
+          { x: 900, y: 630, w: 200, h: 20 },
+          { x: 1150, y: 630, w: 60, h: 20 },
+          { x: 900, y: 650, w: 20, h: 100 },
+          { x: 920, y: 700, w: 180, h: 20 },
+          { x: 1100, y: 700, w: 50, h: 20 },
+          { x: 1150, y: 650, w: 20, h: 70 },
+          { x: 1100, y: 560, w: 250, h: 20 },
+          { x: 1210, y: 630, w: 140, h: 20 },
+          { x: 1400, y: 550, w: 20, h: 100 },
+          { x: 1350, y: 630, w: 50, h: 20 },
+          { x: 1080, y: 560, w: 20, h: 70 },
+          { x: 1400, y: 490, w: 20, h: 60 },
+          { x: 1080, y: 490, w: 320, h: 20 },
+          { x: 1010, y: 510, w: 20, h: 60 },
+          { x: 1010, y: 490, w: 70, h: 20 },
+          { x: 850, y: 550, w: 50, h: 20 },
+          { x: 830, y: 550, w: 20, h: 200 },
+          { x: 900, y: 550, w: 50, h: 20 },
+          { x: 900, y: 490, w: 110, h: 20 },
+          { x: 830, y: 490, w: 20, h: 60 },
+          { x: 850, y: 420, w: 250, h: 20 },
+          { x: 830, y: 420, w: 20, h: 70 },
+          { x: 1150, y: 420, w: 20, h: 70 },
+          { x: 1170, y: 420, w: 150, h: 20 },
+          { x: 1100, y: 350, w: 290, h: 20 },
+          { x: 1370, y: 370, w: 20, h: 120 },
+          { x: 1270, y: 1000, w: 20, h: 70 },
+          { x: 650, y: 1070, w: 640, h: 20 },
+          { x: 650, y: 950, w: 20, h: 120 },
+          { x: 510, y: 820, w: 20, h: 130 },
+          { x: 730, y: 900, w: 20, h: 100 },
+          { x: 590, y: 880, w: 160, h: 20 },
+          { x: 730, y: 1000, w: 460, h: 20 },
+          { x: 900, y: 750, w: 20, h: 50 },
+          { x: 590, y: 800, w: 330, h: 20 },
+          { x: 590, y: 730, w: 240, h: 20 },
+          { x: 590, y: 750, w: 20, h: 50 },
+          { x: 590, y: 820, w: 20, h: 60 },
+          { x: 510, y: 950, w: 140, h: 20 },
+          { x: 510, y: 400, w: 20, h: 420 },
+          { x: 590, y: 440, w: 20, h: 290 },
+          { x: 590, y: 420, w: 170, h: 20 },
+          { x: 670, y: 490, w: 160, h: 20 },
+          { x: 610, y: 560, w: 150, h: 20 },
+          { x: 670, y: 630, w: 160, h: 20 },
+          { x: 610, y: 700, w: 220, h: 30 },
+          { x: 510, y: 350, w: 20, h: 50 },
+          { x: 1020, y: 300, w: 20, h: 70 },
+          { x: 880, y: 350, w: 80, h: 20 },
+          { x: 530, y: 350, w: 350, h: 20 },
+          { x: 650, y: 280, w: 370, h: 20 },
+          { x: 1350, y: 1050, w: 20, h: 100 },
+          { x: 1270, y: 980, w: 180, h: 20 },
+          { x: 1430, y: 1000, w: 20, h: 100 },
+          { x: 1450, y: 1080, w: 100, h: 20 },
+          { x: 1500, y: 1010, w: 100, h: 20 },
+          { x: 1600, y: 1010, w: 20, h: 140 },
+          { x: 1450, y: 940, w: 170, h: 20 },
+          { x: 1430, y: 940, w: 20, h: 40 },
+          { x: 1600, y: 850, w: 20, h: 90 },
+          { x: 1620, y: 1010, w: 40, h: 20 },
+          { x: 1750, y: 870, w: 100, h: 20 },
+          { x: 1600, y: 750, w: 100, h: 20 },
+          { x: 1600, y: 770, w: 20, h: 80 },
+          { x: 1850, y: 630, w: 100, h: 20 },
+          { x: 1900, y: 480, w: 50, h: 20 },
+          { x: 1840, y: 410, w: 60, h: 20 },
+          { x: 1820, y: 330, w: 130, h: 20 },
+          { x: 1790, y: 410, w: 30, h: 20 },
+          { x: 1420, y: 490, w: 30, h: 20 },
+          { x: 1450, y: 280, w: 20, h: 230 },
+          { x: 1470, y: 330, w: 350, h: 20 },
+          { x: 1820, y: 410, w: 20, h: 160 },
+          { x: 1510, y: 580, w: 20, h: 20 },
+          { x: 1420, y: 630, w: 20, h: 20 },
+          { x: 800, y: 930, w: 470, h: 20 },
+          { x: 1230, y: 700, w: 140, h: 20 },
+          { x: 1350, y: 720, w: 20, h: 210 },
+          { x: 1270, y: 930, w: 100, h: 20 },
+          { x: 1270, y: 950, w: 100, h: 30 },
+          { x: 1150, y: 770, w: 130, h: 20 },
+          { x: 1150, y: 720, w: 20, h: 50 },
+          { x: 1070, y: 770, w: 20, h: 90 },
+          { x: 1090, y: 840, w: 260, h: 20 },
+          { x: 980, y: 770, w: 90, h: 20 },
+          { x: 450, y: 950, w: 60, h: 20 },
+          { x: 430, y: 400, w: 20, h: 570 },
+          { x: 350, y: 300, w: 20, h: 450 },
+          { x: 350, y: 750, w: 20, h: 220 },
+          { x: 350, y: 280, w: 230, h: 20 },
+          { x: 370, y: 140, w: 220, h: 20 },
+          { x: 350, y: 140, w: 20, h: 140 },
+          { x: 590, y: 140, w: 250, h: 20 },
+          { x: 840, y: 140, w: 20, h: 140 },
+          { x: 430, y: 210, w: 350, h: 20 },
+          { x: 1020, y: 280, w: 230, h: 20 },
+          { x: 1310, y: 280, w: 140, h: 20 },
+          { x: 1310, y: 100, w: 20, h: 180 },
+          { x: 930, y: 210, w: 380, h: 20 },
+          { x: 860, y: 140, w: 380, h: 20 },
+          { x: 1330, y: 100, w: 160, h: 20 },
+          { x: 1550, y: 100, w: 20, h: 230 },
+          { x: 1470, y: 170, w: 20, h: 110 },
+          { x: 1390, y: 200, w: 20, h: 80 },
+          { x: 1570, y: 100, w: 130, h: 20 },
+          { x: 350, y: 50, w: 890, h: 40 },
+          { x: 350, y: 90, w: 20, h: 50 },
+          { x: 430, y: 1020, w: 20, h: 80 },
+          { x: 450, y: 1020, w: 130, h: 20 },
+          { x: 630, y: 1070, w: 20, h: 20 },
+          { x: 560, y: 1040, w: 20, h: 60 },
+          { x: 450, y: 1130, w: 20, h: 20 },
+          { x: 530, y: 1080, w: 30, h: 20 },
+          { x: 250, y: 130, w: 100, h: 20 },
+          { x: 100, y: 130, w: 20, h: 20 },
+          { x: 180, y: 130, w: 20, h: 20 },
+          { x: 50, y: 230, w: 20, h: 20 },
+          { x: 160, y: 310, w: 20, h: 20 }
+        ],
+        obstacles: [
+          { x: 1100, y: 1020, w: 90, h: 50 },
+          { x: 920, y: 650, w: 20, h: 50 },
+          { x: 1170, y: 440, w: 20, h: 50 },
+          { x: 810, y: 650, w: 20, h: 50 },
+          { x: 610, y: 750, w: 20, h: 50 },
+          { x: 1620, y: 1100, w: 330, h: 50 },
+          { x: 1600, y: 600, w: 20, h: 150 },
+          { x: 1390, y: 470, w: 60, h: 20 },
+          { x: 1470, y: 350, w: 60, h: 50 },
+          { x: 1530, y: 580, w: 90, h: 20 },
+          { x: 1370, y: 930, w: 60, h: 50 },
+          { x: 1130, y: 720, w: 20, h: 20 },
+          { x: 1330, y: 820, w: 20, h: 20 },
+          { x: 1330, y: 720, w: 20, h: 20 },
+          { x: 1170, y: 750, w: 20, h: 20 },
+          { x: 1170, y: 650, w: 20, h: 20 },
+          { x: 920, y: 720, w: 20, h: 20 },
+          { x: 1020, y: 790, w: 50, h: 50 },
+          { x: 1300, y: 860, w: 50, h: 70 },
+          { x: 1250, y: 950, w: 20, h: 20 },
+          { x: 610, y: 820, w: 20, h: 60 },
+          { x: 900, y: 900, w: 30, h: 30 },
+          { x: 800, y: 900, w: 30, h: 30 },
+          { x: 450, y: 930, w: 60, h: 20 },
+          { x: 1330, y: 260, w: 60, h: 20 },
+          { x: 1410, y: 260, w: 60, h: 20 },
+          { x: 1570, y: 300, w: 380, h: 30 },
+          { x: 370, y: 90, w: 20, h: 50 },
+          { x: 540, y: 1040, w: 20, h: 20 },
+          { x: 350, y: 970, w: 20, h: 80 },
+          { x: 250, y: 690, w: 100, h: 20 },
+          { x: 50, y: 550, w: 100, h: 20 },
+          { x: 120, y: 130, w: 60, h: 20 },
+          { x: 200, y: 130, w: 50, h: 20 },
+          { x: 150, y: 980, w: 80, h: 20 },
+          { x: 50, y: 1100, w: 250, h: 50 },
+          { x: 50, y: 250, w: 40, h: 20 }
+        ],
+        trampolines: [
+          { x: 1700, y: 520, w: 40, h: 20, angle: 0 },
+          { x: 1430, y: 890, w: 170, h: 50, angle: 45 },
+          { x: 930, y: 880, w: 60, h: 50, angle: -45 },
+          { x: 1470, y: 280, w: 80, h: 50, angle: 0 },
+          { x: 300, y: 1100, w: 150, h: 50, angle: 0 },
+          { x: 50, y: 980, w: 100, h: 20, angle: 0 },
+          { x: 150, y: 690, w: 100, h: 20, angle: 0 },
+          { x: 50, y: 530, w: 100, h: 20, angle: 0 }
+        ],
+        lights: [
+          { x: 780, y: 680 },
+          { x: 170, y: 290 },
+          { x: 1400, y: 180 }
+        ],
+        goal: { x: 1230, y: 1040 },
+        clue: { x: 310, y: 90 },
+        spawnX: 1000,
+        spawnY: 600
+      }
+    };
+
+    function getCurrentWorld() {
+      if (currentLevel <= 3) return 1;
+      if (currentLevel <= 6) return 2;
+      if (currentLevel <= 9) return 3;
+      return 4;
+    }
+
+    function resetLevel() {
+      // En mode tutoriel, utiliser loadTutorialLevel à la place
+      if (isTutorialMode) {
+        loadTutorialLevel();
+        return;
+      }
+
+      const level = levels[currentLevel];
+      player.x = level.spawnX;
+      player.y = level.spawnY;
+      player.velY = 0;
+      player.velX = 0;
+      player.grounded = false;
+      tempClueCollected = false;
+      camera.x = 0;
+      camera.y = 0;
+      // Reset wall jump state
+      lastWallTouchTime = 0;
+      lastWallSide = null;
+      wallGrabCount = 0;
+      // Niveau obscur
+      player.visionRadius = 120;
+      player.collectedLights = [];
+    }
+
+    function nextLevel() {
+      gameRunning = false;
+      hideTutorial(); // Cacher le tutoriel avant de changer de niveau
+
+      const levelTime = Date.now() - levelStartTime;
+      const clueCollected = tempClueCollected;
+
+      // Callback pour l'intégration
+      if (GAME_CONFIG.onLevelComplete) {
+        GAME_CONFIG.onLevelComplete(currentLevel, levelTime, clueCollected);
+      }
+
+      setTimeout(() => {
+        if (currentLevel === GAME_CONFIG.totalLevels) {
+          showVictory();
+        } else {
+          currentLevel++;
+          levelStartTime = Date.now();
+          resetLevel();
+          saveGameState(); // Sauvegarder la progression
+          updateUI();
+          gameRunning = true;
+        }
+      }, 200);
+    }
+
+    function showVictory() {
+      gameRunning = false;
+      clearGameState(); // Victoire = on peut effacer la session
+      hideTutorial();
+      document.getElementById('ui').classList.add('hidden');
+      document.getElementById('gameCanvas').classList.add('hidden');
+
+      // Calculer le score final
+      const finalScore = calculateFinalScore();
+
+      // Envoyer le score à l'application parente si on a un token
+      if (gameToken) {
+        sendScoreToParent(finalScore, totalTime);
+      }
+
+      // Callback pour l'intégration
+      if (GAME_CONFIG.onGameComplete) {
+        GAME_CONFIG.onGameComplete(totalTime, finalScore, collectedClues);
+      }
+
+      const victoryDiv = document.createElement('div');
+      victoryDiv.id = 'victory';
+      victoryDiv.style.cssText = 'position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;padding:20px;text-align:center;overflow-y:auto;font-family:Orbitron,sans-serif;';
+      victoryDiv.innerHTML = `
+        <h1 style="font-size:48px;margin-bottom:20px;background:linear-gradient(135deg,#81FE0E,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎉 VICTOIRE ! 🎉</h1>
+        <p style="font-size:20px;margin-bottom:10px;">Temps total: <strong>${formatTime(totalTime)}</strong></p>
+        <p style="font-size:28px;margin-bottom:25px;color:#81FE0E;">Score bonus: <strong>+${finalScore} pts</strong></p>
+        <div style="background:#fff;color:#000;padding:35px;border-radius:15px;margin-bottom:25px;max-width:600px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+          <h2 style="font-size:28px;margin-bottom:20px;color:#343973;">🔍 Les 4 Indices</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;">
+            ${collectedClues.map(c => `<div style="background:#343973;color:white;padding:20px;border-radius:10px;font-size:20px;font-weight:bold;">${c}</div>`).join('')}
+          </div>
+          <p style="font-size:16px;margin-top:20px;line-height:1.5;color:#333;">
+            Utilisez ces indices pour résoudre l'énigme finale !<br>
+            <strong style="font-size:18px;color:#81FE0E;">🎯 Trouvez le QR Code caché !</strong>
+          </p>
+        </div>
+        ${gameToken ? `
+          <button onclick="closeAndGoToQR()" style="padding:20px 50px;font-size:20px;background:#81FE0E;color:#000;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(129,254,14,0.4);font-weight:bold;font-family:Orbitron,sans-serif;margin-bottom:15px;">
+            🏃 Chercher le QR Code !
+          </button>
+          <p style="font-size:14px;opacity:0.7;">Clique pour retourner à l'application et commencer la chasse au QR Code</p>
+        ` : `
+          <button onclick="location.reload()" style="padding:15px 40px;font-size:18px;background:#343973;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(0,0,0,0.4);font-weight:bold;font-family:Orbitron,sans-serif;">Rejouer 🔄</button>
+        `}
+      `;
+      document.body.appendChild(victoryDiv);
+    }
+
+    // Fermer la fenêtre et retourner à l'app
+    function closeAndGoToQR() {
+      // Le score a déjà été envoyé via postMessage
+      // Fermer cette fenêtre
+      window.close();
+      // Si la fenêtre ne se ferme pas (restrictions navigateur), afficher un message
+      setTimeout(() => {
+        alert('Tu peux maintenant fermer cette fenêtre et retourner à l\'application pour chercher le QR Code !');
+      }, 500);
+    }
+
+    function startGame(forceNew = false) {
+      const savedState = loadGameState();
+
+      document.getElementById('menu').classList.add('hidden');
+      document.getElementById('ui').classList.remove('hidden');
+      document.getElementById('gameCanvas').classList.remove('hidden');
+      gameRunning = true;
+
+      if (savedState && !forceNew) {
+        // Reprendre la partie en cours - LE CHRONO CONTINUE
+        gameStartTime = savedState.startTime;
+        currentLevel = savedState.currentLevel || 1;
+        lives = savedState.lives || GAME_CONFIG.startingLives;
+        collectedClues = savedState.collectedClues || [];
+        if (savedState.playerColor) playerColor = savedState.playerColor;
+      } else {
+        // Nouvelle partie
+        currentLevel = 1;
+        lives = GAME_CONFIG.startingLives;
+        collectedClues = [];
+        gameStartTime = Date.now();
+      }
+
+      levelStartTime = Date.now();
+      points = 0;
+      resetLevel();
+      saveGameState();
+
+      // Callback pour l'intégration
+      if (GAME_CONFIG.onGameStart) {
+        GAME_CONFIG.onGameStart(playerColor);
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+    });
+
+    document.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+    });
+
+    // Vérifier que les boutons existent avant d'ajouter les listeners
+    const leftBtn = document.getElementById('leftBtn');
+    if (leftBtn) {
+      leftBtn.addEventListener('mousedown', () => keys['ArrowLeft'] = true);
+      leftBtn.addEventListener('mouseup', () => keys['ArrowLeft'] = false);
+      leftBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys['ArrowLeft'] = true;
+      });
+      leftBtn.addEventListener('touchend', () => keys['ArrowLeft'] = false);
+    }
+
+    const rightBtn = document.getElementById('rightBtn');
+    if (rightBtn) {
+      rightBtn.addEventListener('mousedown', () => keys['ArrowRight'] = true);
+      rightBtn.addEventListener('mouseup', () => keys['ArrowRight'] = false);
+      rightBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys['ArrowRight'] = true;
+      });
+      rightBtn.addEventListener('touchend', () => keys['ArrowRight'] = false);
+    }
+
+    const jumpBtn = document.getElementById('jumpBtn');
+    if (jumpBtn) {
+      jumpBtn.addEventListener('mousedown', () => keys[' '] = true);
+      jumpBtn.addEventListener('mouseup', () => keys[' '] = false);
+      jumpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys[' '] = true;
+      });
+      jumpBtn.addEventListener('touchend', () => keys[' '] = false);
+    }
+
+    function updateCamera() {
+      const level = levels[currentLevel];
+      camera.x = player.x - canvas.width / 2 + player.width / 2;
+      camera.y = player.y - canvas.height / 2 + player.height / 2;
+      camera.x = Math.max(0, Math.min(camera.x, level.width - canvas.width));
+      camera.y = Math.max(0, Math.min(camera.y, level.height - canvas.height));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ███ FONCTION updatePlayer() - PHYSIQUE IDENTIQUE À L'ÉDITEUR ███
+    // ═══════════════════════════════════════════════════════════════════
+    function updatePlayer() {
+      const level = isTutorialMode ? getCurrentLevel() : levels[currentLevel];
+      const config = WALL_JUMP_CONFIG;
+      const now = Date.now();
+
+      // Wall jump désactivé pour certains niveaux (ex: niveau 12)
+      const wallJumpEnabled = !level.disableWallJump;
+
+      let touchingLeftWall = false;
+      let touchingRightWall = false;
+
+      // ===== DÉPLACEMENT HORIZONTAL =====
+      if (keys['ArrowLeft'] || keys['a'] || keys['q']) {
+        player.velX = -5;
+      } else if (keys['ArrowRight'] || keys['d']) {
+        player.velX = 5;
+      } else {
+        player.velX *= friction;
+      }
+
+      player.x += player.velX;
+
+      // ===== COLLISION HORIZONTALE (améliorée) =====
+      level.platforms.forEach(plat => {
+        const margin = Math.min(2, plat.h / 4, plat.w / 4);
+        // Vérifier si le joueur est dans la zone verticale de la plateforme
+        if (player.y + player.height > plat.y + margin &&
+          player.y < plat.y + plat.h - margin &&
+          player.x + player.width > plat.x &&
+          player.x < plat.x + plat.w) {
+
+          // Calculer la pénétration de chaque côté
+          const overlapLeft = player.x + player.width - plat.x;
+          const overlapRight = plat.x + plat.w - player.x;
+
+          // Résoudre par le côté avec la plus petite pénétration
+          if (overlapLeft < overlapRight) {
+            // Collision par la gauche de la plateforme
+            player.x = plat.x - player.width;
+          } else {
+            // Collision par la droite de la plateforme
+            player.x = plat.x + plat.w;
+          }
+          player.velX = 0;
+        }
+      });
+
+      // Limites du niveau
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > level.width) {
+        player.x = level.width - player.width;
+      }
+
+      // ===== DÉTECTION DES MURS (si wall jump activé) =====
+      if (wallJumpEnabled) {
+        const wallDetectionMargin = 2;
+        level.platforms.forEach(plat => {
+          if (player.y + player.height > plat.y + 2 && player.y < plat.y + plat.h - 2) {
+            if (player.x + player.width >= plat.x - wallDetectionMargin &&
+              player.x + player.width <= plat.x + wallDetectionMargin) {
+              touchingRightWall = true;
+            }
+            if (player.x <= plat.x + plat.w + wallDetectionMargin &&
+              player.x >= plat.x + plat.w - wallDetectionMargin) {
+              touchingLeftWall = true;
+            }
+          }
+        });
+
+        if (player.x <= wallDetectionMargin) touchingLeftWall = true;
+        if (player.x + player.width >= level.width - wallDetectionMargin) touchingRightWall = true;
+      }
+
+      const currentlyOnWall = wallJumpEnabled && (touchingLeftWall || touchingRightWall) && !player.grounded;
+
+      if (currentlyOnWall) {
+        lastWallTouchTime = now;
+        lastWallSide = touchingLeftWall ? 'left' : 'right';
+      }
+
+      const wallCoyoteActive = wallJumpEnabled && (now - lastWallTouchTime) < config.coyoteTime;
+      const canWallJump = wallJumpEnabled && (currentlyOnWall || wallCoyoteActive);
+      const effectiveWallSide = currentlyOnWall ? (touchingLeftWall ? 'left' : 'right') : lastWallSide;
+
+      // ===== WALL SLIDE =====
+      if (wallJumpEnabled && currentlyOnWall && player.velY > 0 && config.wallSlideSpeed > 0) {
+        player.velY = Math.min(player.velY, config.wallSlideSpeed);
+      }
+
+      // ===== INPUT SAUT =====
+      const jumpKeyPressed = keys['ArrowUp'] || keys[' '] || keys['w'] || keys['z'];
+      const jumpKeyJustPressed = jumpKeyPressed && !jumpKeyWasPressed;
+      jumpKeyWasPressed = jumpKeyPressed;
+
+      if (jumpKeyJustPressed) {
+        if (player.grounded) {
+          player.velY = jumpPower;
+          player.grounded = false;
+        } else if (canWallJump) {
+          let canPerformWallJump = false;
+          if (config.mode === 'transformice') canPerformWallJump = true;
+          else if (config.mode === 'mario') {
+            if (effectiveWallSide === 'right' && (keys['ArrowLeft'] || keys['a'] || keys['q'])) {
+              canPerformWallJump = true;
+            } else if (effectiveWallSide === 'left' && (keys['ArrowRight'] || keys['d'])) {
+              canPerformWallJump = true;
+            }
+          }
+
+          if (canPerformWallJump) {
+            player.velY = config.wallJumpForceY;
+            player.grounded = false;
+            lastWallJumpTime = now;
+            player.velX = effectiveWallSide === 'right' ? -config.wallJumpForceX : config.wallJumpForceX;
+            lastWallTouchTime = 0;
+          }
+        }
+      }
+
+      // ===== GRAVITÉ =====
+      player.velY += gravity;
+      player.y += player.velY;
+      player.grounded = false;
+
+      // ===== COLLISION VERTICALE =====
+      level.platforms.forEach(plat => {
+        const margin = Math.min(2, plat.h / 4, plat.w / 4);
+        if (player.x + player.width > plat.x + margin &&
+          player.x < plat.x + plat.w - margin &&
+          player.y + player.height > plat.y &&
+          player.y < plat.y + plat.h) {
+
+          if (player.velY > 0 && player.y + player.height - player.velY <= plat.y + 5) {
+            player.y = plat.y - player.height;
+            player.velY = 0;
+            player.grounded = true;
+          } else if (player.velY < 0 && player.y - player.velY >= plat.y + plat.h - 5) {
+            player.y = plat.y + plat.h;
+            player.velY = 0;
+          }
+        }
+      });
+
+      // ===== TRAMPOLINES (horizontaux uniquement) =====
+      if (level.trampolines) {
+        level.trampolines.forEach(tramp => {
+          if (player.x + player.width > tramp.x + 2 &&
+            player.x < tramp.x + tramp.w - 2 &&
+            player.y + player.height > tramp.y &&
+            player.y < tramp.y + tramp.h) {
+
+            if (player.velY > 0 && player.y + player.height - player.velY <= tramp.y + 10) {
+              player.y = tramp.y - player.height;
+
+              const downKeyPressed = keys['ArrowDown'] || keys['s'];
+
+              if (downKeyPressed || player.velY < 4) {
+                player.velY = 0;
+                player.grounded = true;
+              } else {
+                let reboundForce = -player.velY * 0.75;
+                if (jumpKeyPressed) reboundForce -= 12;
+                player.velY = Math.max(-30, reboundForce);
+                player.grounded = false;
+              }
+            }
+          }
+        });
+      }
+
+      // ===== OBSTACLES =====
+      if (level.obstacles) {
+        level.obstacles.forEach(obs => {
+          if (player.x + player.width > obs.x &&
+            player.x < obs.x + obs.w &&
+            player.y + player.height > obs.y &&
+            player.y < obs.y + obs.h) {
+            if (gameRunning) {
+              if (isTutorialMode) {
+                // En tutoriel, juste reset le niveau sans perdre de vie
+                loadTutorialLevel();
+              } else {
+                lives--;
+
+                // Callback pour l'intégration
+                if (GAME_CONFIG.onDeath) {
+                  GAME_CONFIG.onDeath(lives, currentLevel);
+                }
+
+                if (lives <= 0) {
+                  // PAS DE GAME OVER - Reset au niveau 1, chrono continue !
+                  lives = GAME_CONFIG.startingLives;
+                  currentLevel = 1;
+                  collectedClues = [];
+                  showDeathMessage();
+                }
+                resetLevel();
+                saveGameState();
+                updateUI();
+              }
+            }
+          }
+        });
+      }
+
+      // ===== COLLECTE AMPOULES (niveau obscur) =====
+      if (level.lights) {
+        level.lights.forEach((light, index) => {
+          if (!player.collectedLights.includes(index)) {
+            const dist = Math.sqrt(Math.pow(player.x + player.width / 2 - light.x, 2) +
+              Math.pow(player.y + player.height / 2 - light.y, 2));
+            if (dist < 40) {
+              player.collectedLights.push(index);
+              player.visionRadius += 60;
+            }
+          }
+        });
+      }
+
+      // ===== COLLECTE DE L'INDICE =====
+      if (level.clue && !tempClueCollected && clueTexts[currentLevel]) {
+        const dist = Math.sqrt(Math.pow(player.x - level.clue.x, 2) + Math.pow(player.y - level.clue.y, 2));
+        if (dist < 40) {
+          tempClueCollected = true;
+        }
+      }
+
+      // ===== ARRIVÉE =====
+      const distGoal = Math.sqrt(Math.pow(player.x - level.goal.x, 2) + Math.pow(player.y - level.goal.y, 2));
+      if (distGoal < 40) {
+        if (isTutorialMode) {
+          nextTutorialLevel();
+        } else {
+          if (tempClueCollected && clueTexts[currentLevel]) {
+            collectedClues.push(clueTexts[currentLevel]);
+          }
+          nextLevel();
+        }
+      }
+
+      // ===== MORT PAR CHUTE =====
+      if (player.y > level.height) {
+        if (gameRunning) {
+          if (isTutorialMode) {
+            // En tutoriel, juste reset le niveau sans perdre de vie
+            loadTutorialLevel();
+          } else {
+            lives--;
+
+            // Callback pour l'intégration
+            if (GAME_CONFIG.onDeath) {
+              GAME_CONFIG.onDeath(lives, currentLevel);
+            }
+
+            if (lives <= 0) {
+              // PAS DE GAME OVER - Reset au niveau 1, chrono continue !
+              lives = GAME_CONFIG.startingLives;
+              currentLevel = 1;
+              collectedClues = [];
+              showDeathMessage();
+            }
+            resetLevel();
+            saveGameState();
+            updateUI();
+          }
+        }
+      }
+    }
+
+    // Message de mort (pas de blocage, juste un flash)
+    function showDeathMessage() {
+      const msg = document.createElement('div');
+      msg.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #dc2626; color: white; padding: 30px 50px;
+        border-radius: 15px; font-size: 20px; font-weight: bold; z-index: 9999;
+        text-align: center; box-shadow: 0 0 40px rgba(220,38,38,0.6);
+        font-family: Orbitron, sans-serif; border: 2px solid #fff;
+      `;
+      msg.innerHTML = '💀 Retour au niveau 1 !<br><span style="font-size:14px;opacity:0.8;">Le chrono continue...</span>';
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 1500);
+    }
+
+    // Game Over screen (non utilisé - le jeu ne s'arrête jamais)
+    function showGameOver() {
+      document.getElementById('ui').classList.add('hidden');
+      document.getElementById('gameCanvas').classList.add('hidden');
+
+      const gameOverDiv = document.createElement('div');
+      gameOverDiv.style.cssText = 'position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;padding:20px;text-align:center;z-index:2000;font-family:Orbitron,sans-serif;';
+      gameOverDiv.innerHTML = `
+        <h1 style="font-size:48px;margin-bottom:30px;color:#dc2626;">💀 GAME OVER 💀</h1>
+        <p style="font-size:20px;margin-bottom:20px;">Tu as perdu toutes tes vies !</p>
+        <p style="font-size:18px;margin-bottom:10px;">Temps total: ${formatTime(totalTime)}</p>
+        <p style="font-size:18px;margin-bottom:30px;">Niveau atteint: ${currentLevel}/12</p>
+        <button onclick="location.reload()" style="padding:15px 40px;font-size:18px;background:#81FE0E;color:#000;border:none;border-radius:12px;cursor:pointer;font-weight:bold;font-family:Orbitron,sans-serif;">Recommencer 🔄</button>
+      `;
+      document.body.appendChild(gameOverDiv);
+    }
+
+
+    function draw() {
+      const level = isTutorialMode ? getCurrentLevel() : levels[currentLevel];
+      const world = isTutorialMode ? { name: 'Tutoriel', color: '#81FE0E', bgStart: '#1a1a2e', bgEnd: '#16213e' } : worlds[getCurrentWorld()];
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, world.bgStart);
+      gradient.addColorStop(1, world.bgEnd);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+
+      ctx.fillStyle = world.color;
+      level.platforms.forEach(plat => {
+        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+      });
+
+      if (level.obstacles) {
+        ctx.fillStyle = '#EF4444';
+        level.obstacles.forEach(obs => {
+          ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+          ctx.strokeStyle = '#991B1B';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
+        });
+      }
+
+      // Trampolines (horizontaux uniquement)
+      if (level.trampolines) {
+        level.trampolines.forEach(tramp => {
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+          ctx.fillRect(tramp.x, tramp.y, tramp.w, tramp.h);
+          ctx.strokeStyle = '#06B6D4';
+          ctx.lineWidth = 6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(tramp.x, tramp.y + tramp.h / 2);
+          ctx.lineTo(tramp.x + tramp.w, tramp.y + tramp.h / 2);
+          ctx.stroke();
+        });
+      }
+
+      ctx.font = 'bold 40px Arial';
+      ctx.fillText('🏁', level.goal.x - 15, level.goal.y + 15);
+
+      if (level.clue && !tempClueCollected && clueTexts[currentLevel]) {
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText('📜', level.clue.x - 15, level.clue.y + 15);
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+        ctx.shadowBlur = 20;
+        ctx.fillText('📜', level.clue.x - 15, level.clue.y + 15);
+        ctx.shadowBlur = 0;
+      }
+
+      // Ampoules (lights)
+      if (level.lights) {
+        level.lights.forEach((light, index) => {
+          if (!player.collectedLights.includes(index)) {
+            const glowGradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 40);
+            glowGradient.addColorStop(0, 'rgba(255, 255, 150, 0.8)');
+            glowGradient.addColorStop(1, 'rgba(255, 255, 150, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(light.x, light.y, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💡', light.x, light.y);
+          }
+        });
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      ctx.fillStyle = playerColor;
+      ctx.beginPath();
+      ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath();
+      ctx.arc(player.x + player.width / 2 - 5, player.y + player.height / 2 - 5, player.width / 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dark level - masque noir avec cercle de vision
+      if (level.isDarkLevel) {
+        const playerScreenX = player.x + player.width / 2 - camera.x;
+        const playerScreenY = player.y + player.height / 2 - camera.y;
+        const visionRadius = player.visionRadius || 120;
+
+        // Créer un gradient radial pour la vision
+        const visionGradient = ctx.createRadialGradient(
+          player.x + player.width / 2, player.y + player.height / 2, visionRadius * 0.7,
+          player.x + player.width / 2, player.y + player.height / 2, visionRadius
+        );
+        visionGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        visionGradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+
+        // Dessiner le masque
+        ctx.fillStyle = visionGradient;
+        ctx.fillRect(camera.x, camera.y, canvas.width, canvas.height);
+
+        // Ajouter une couche noire sur les bords éloignés
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+        // Haut
+        ctx.fillRect(camera.x, camera.y, canvas.width, Math.max(0, player.y + player.height / 2 - visionRadius - camera.y));
+        // Bas
+        const bottomY = player.y + player.height / 2 + visionRadius;
+        ctx.fillRect(camera.x, bottomY, canvas.width, Math.max(0, camera.y + canvas.height - bottomY));
+        // Gauche
+        ctx.fillRect(camera.x, camera.y, Math.max(0, player.x + player.width / 2 - visionRadius - camera.x), canvas.height);
+        // Droite
+        const rightX = player.x + player.width / 2 + visionRadius;
+        ctx.fillRect(rightX, camera.y, Math.max(0, camera.x + canvas.width - rightX), canvas.height);
+      }
+
+      ctx.restore();
+
+      // ===== AFFICHAGE DEBUG WALL JUMP (optionnel) =====
+      // Décommente pour voir le mode actif et la stamina (mode Celeste)
+      /*
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(10, canvas.height - 60, 200, 50);
+      ctx.fillStyle = 'white';
+      ctx.font = '14px Arial';
+      ctx.fillText(`Mode: ${WALL_JUMP_CONFIG.mode}`, 20, canvas.height - 40);
+      if (WALL_JUMP_CONFIG.mode === 'celeste') {
+        ctx.fillText(`Stamina: ${WALL_JUMP_CONFIG.maxWallGrabs - wallGrabCount}/${WALL_JUMP_CONFIG.maxWallGrabs}`, 20, canvas.height - 20);
+      }
+      */
+    }
+
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function calculateFinalScore() {
+      const timeMinutes = totalTime / 1000 / 60; // Temps en minutes
+
+      // Trouver le bonus selon le palier de temps
+      for (const tier of SCORING.timeBonuses) {
+        if (timeMinutes < tier.maxMinutes) {
+          return tier.bonus;
+        }
+      }
+      return 0; // Au-delà du dernier palier
+    }
+
+    function updateUI() {
+      const heartsHTML = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
+      document.getElementById('lives').innerHTML = heartsHTML;
+      document.getElementById('level').textContent = `Niveau ${currentLevel}/${GAME_CONFIG.totalLevels}`;
+      document.getElementById('timer').textContent = `⏱️ ${formatTime(totalTime)}`;
+      document.getElementById('points').textContent = `🏆 ${calculateFinalScore()} pts`;
+    }
+
+    // ===== GAME LOOP FIXÉE À 60 FPS =====
+    const TARGET_FPS = 60;
+    const FRAME_DURATION = 1000 / TARGET_FPS; // 16.67ms
+    let lastFrameTime = 0;
+
+    function gameLoop(currentTime) {
+      const elapsed = currentTime - lastFrameTime;
+
+      if (elapsed >= FRAME_DURATION) {
+        lastFrameTime = currentTime - (elapsed % FRAME_DURATION);
+
+        if (gameRunning) {
+          totalTime = Date.now() - gameStartTime;
+          updatePlayer();
+          updateCamera();
+          updateUI();
+          draw();
+        } else {
+          draw();
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    updateUI();
+
+    // ===== INITIALISATION DU MENU =====
+    (async function initMenu() {
+      // Vérifier si on a un token dans l'URL
+      gameToken = getTokenFromUrl();
+
+      if (gameToken) {
+        // Mode intégré - valider le token
+        const isValid = await validateToken(gameToken);
+
+        if (!isValid) {
+          // Token invalide - afficher une erreur
+          document.getElementById('menu').innerHTML = `
+            <div style="background: #dc2626; padding: 30px; border-radius: 15px; max-width: 500px; text-align: center;">
+              <h2 style="color: white; margin-bottom: 15px;">❌ Session invalide</h2>
+              <p style="color: white; margin-bottom: 20px;">
+                Le lien de jeu est invalide ou a expiré.<br>
+                Retourne à l'application pour relancer le jeu.
+              </p>
+              <button onclick="window.close()" style="padding: 15px 30px; font-size: 16px; background: white; color: #dc2626; border: none; border-radius: 10px; cursor: pointer; font-family: Orbitron, sans-serif; font-weight: bold;">
+                Fermer cette fenêtre
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        console.log('Token validated successfully');
+        tokenValidated = true;
+      }
+
+      const savedState = loadGameState();
+      const startBtn = document.getElementById('startBtn');
+      const continueBtn = document.getElementById('continueBtn');
+      const sessionInfo = document.getElementById('sessionInfo');
+
+      if (savedState && savedState.startTime) {
+        // Session en cours - afficher le bouton continuer
+        const elapsedMs = Date.now() - savedState.startTime;
+        const elapsedMin = Math.floor(elapsedMs / 60000);
+        const elapsedSec = Math.floor((elapsedMs % 60000) / 1000);
+
+        continueBtn.style.display = 'block';
+        sessionInfo.style.display = 'block';
+        sessionInfo.innerHTML = `⏱️ Partie en cours : ${elapsedMin}:${elapsedSec.toString().padStart(2, '0')} | Niveau ${savedState.currentLevel || 1} | ❤️ ${savedState.lives || 5} vies`;
+
+        startBtn.textContent = 'Nouvelle partie 🆕';
+        startBtn.onclick = () => {
+          if (confirm('⚠️ Voulez-vous vraiment recommencer ? Le chrono actuel sera perdu !')) {
+            clearGameState();
+            startGame(true);
+          }
+        };
+      }
+    })();
+  </script>
+</body>
+
+</html>
