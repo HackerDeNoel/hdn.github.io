@@ -3733,7 +3733,17 @@
 
                     if (error) {
                         console.error('Error starting game:', error);
-                        showToast('❌ Erreur lors du lancement du jeu', 'error');
+                        // Message d'erreur plus détaillé pour le debug
+                        if (error.message.includes('function') || error.code === '42883') {
+                            showToast('❌ La fonction RPC n\'existe pas. Exécute le SQL dans Supabase !', 'error');
+                        } else {
+                            showToast('❌ Erreur: ' + error.message, 'error');
+                        }
+                        return;
+                    }
+
+                    if (!token) {
+                        showToast('❌ Token non généré. Vérifie que l\'énigme est bien résolue.', 'error');
                         return;
                     }
 
@@ -3748,7 +3758,7 @@
 
                 } catch (error) {
                     console.error('Error starting game:', error);
-                    showToast('❌ Erreur lors du lancement du jeu', 'error');
+                    showToast('❌ Erreur: ' + error.message, 'error');
                 }
             },
 
