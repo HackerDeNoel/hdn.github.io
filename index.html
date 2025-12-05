@@ -829,16 +829,29 @@
 
     <!-- Conteneur du jeu (iframe intégré) -->
     <div id="gameContainer"
-         style="display: none; position: fixed; top: 80px; left: 0; right: 0; bottom: 0; background: #000; z-index: 1000;">
+         style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 2000; opacity: 0; transition: opacity 0.3s ease;">
+        <!-- Header du jeu -->
         <div
-             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 2px solid #81FE0E;">
-            <span style="color: #81FE0E; font-weight: bold; font-size: 1.2em;">🎮 Épreuve Finale</span>
+             style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: linear-gradient(135deg, #0a0a0a, #1a1a2e); border-bottom: 2px solid #81FE0E;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 1.8em;">🎮</span>
+                <div>
+                    <div
+                         style="color: #81FE0E; font-weight: bold; font-size: 1.3em; font-family: 'Orbitron', sans-serif;">
+                        ÉPREUVE FINALE</div>
+                    <div style="color: #666; font-size: 0.85em;">HDN Christmas 2025</div>
+                </div>
+            </div>
             <button onclick="hdnApp.closeGame()"
-                    style="background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                ✕ Fermer le jeu
+                    style="background: transparent; color: #ff6b6b; border: 2px solid #ff6b6b; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Orbitron', sans-serif; transition: all 0.2s;"
+                    onmouseover="this.style.background='#ff6b6b';this.style.color='#000'"
+                    onmouseout="this.style.background='transparent';this.style.color='#ff6b6b'">
+                ✕ Quitter
             </button>
         </div>
-        <iframe id="gameIframe" src="" style="width: 100%; height: calc(100% - 50px); border: none;"></iframe>
+        <!-- Iframe du jeu -->
+        <iframe id="gameIframe" src=""
+                style="width: 100%; height: calc(100% - 70px); border: none; background: #000;"></iframe>
     </div>
 
     <div class="container">
@@ -3814,12 +3827,20 @@
                         return;
                     }
 
-                    // Ouvrir le jeu dans l'iframe intégré
+                    // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
                     const gameUrl = `/game.html?token=${token}`;
-                    document.getElementById('gameIframe').src = gameUrl;
-                    document.getElementById('gameContainer').style.display = 'block';
-                    document.body.style.overflow = 'hidden'; // Empêcher le scroll
+                    const container = document.getElementById('gameContainer');
+                    const iframe = document.getElementById('gameIframe');
+
+                    iframe.src = gameUrl;
+                    container.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+
+                    // Fade in
+                    requestAnimationFrame(() => {
+                        container.style.opacity = '1';
+                    });
 
                     showToast('🎮 Jeu lancé ! Bonne chance !', 'success');
 
@@ -3838,12 +3859,20 @@
                         return;
                     }
 
-                    // Ouvrir le jeu dans l'iframe avec le token existant
+                    // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
                     const gameUrl = `/game.html?token=${progress.game_token}`;
-                    document.getElementById('gameIframe').src = gameUrl;
-                    document.getElementById('gameContainer').style.display = 'block';
+                    const container = document.getElementById('gameContainer');
+                    const iframe = document.getElementById('gameIframe');
+
+                    iframe.src = gameUrl;
+                    container.style.display = 'block';
                     document.body.style.overflow = 'hidden';
+
+                    // Fade in
+                    requestAnimationFrame(() => {
+                        container.style.opacity = '1';
+                    });
 
                 } catch (error) {
                     console.error('Error resuming game:', error);
@@ -3852,11 +3881,18 @@
             },
 
             closeGame() {
-                document.getElementById('gameContainer').style.display = 'none';
-                document.getElementById('gameIframe').src = '';
-                document.body.style.overflow = 'auto';
-                // Rafraîchir les énigmes pour voir le nouvel état
-                this.loadEnigmes();
+                const container = document.getElementById('gameContainer');
+
+                // Fade out
+                container.style.opacity = '0';
+
+                setTimeout(() => {
+                    container.style.display = 'none';
+                    document.getElementById('gameIframe').src = '';
+                    document.body.style.overflow = 'auto';
+                    // Rafraîchir les énigmes pour voir le nouvel état
+                    this.loadEnigmes();
+                }, 300);
             },
 
             // Appelé par le jeu quand il est terminé (via postMessage)
