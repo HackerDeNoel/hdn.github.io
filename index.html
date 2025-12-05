@@ -3780,8 +3780,8 @@
                     // Générer un token de jeu sécurisé via RPC
                     const { data: token, error } = await supabase.rpc('start_game_session', {
                         p_enigma_id: String(enigmaId),
-                        p_player_id: this.currentUser.id,
-                        p_team_id: this.currentUser.team_id || null
+                        p_player_id: String(this.currentUser.id),
+                        p_team_id: this.currentUser.team_id ? String(this.currentUser.team_id) : null
                     });
 
                     if (error) {
