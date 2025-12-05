@@ -827,6 +827,20 @@
         </div>
     </header>
 
+    <!-- Conteneur du jeu (iframe intégré) -->
+    <div id="gameContainer"
+         style="display: none; position: fixed; top: 80px; left: 0; right: 0; bottom: 0; background: #000; z-index: 1000;">
+        <div
+             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 2px solid #81FE0E;">
+            <span style="color: #81FE0E; font-weight: bold; font-size: 1.2em;">🎮 Épreuve Finale</span>
+            <button onclick="hdnApp.closeGame()"
+                    style="background: #dc3545; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                ✕ Fermer le jeu
+            </button>
+        </div>
+        <iframe id="gameIframe" src="" style="width: 100%; height: calc(100% - 50px); border: none;"></iframe>
+    </div>
+
     <div class="container">
         <!-- User Info (hidden by default) -->
         <div class="user-info hidden" id="userInfo">
@@ -3800,14 +3814,14 @@
                         return;
                     }
 
-                    // Ouvrir le jeu dans une nouvelle fenêtre avec le token
+                    // Ouvrir le jeu dans l'iframe intégré
+                    this.currentGameEnigmaId = enigmaId;
                     const gameUrl = `/game.html?token=${token}`;
-                    window.open(gameUrl, '_blank', 'width=1200,height=800');
+                    document.getElementById('gameIframe').src = gameUrl;
+                    document.getElementById('gameContainer').style.display = 'block';
+                    document.body.style.overflow = 'hidden'; // Empêcher le scroll
 
                     showToast('🎮 Jeu lancé ! Bonne chance !', 'success');
-
-                    // Rafraîchir pour afficher "Reprendre le jeu"
-                    setTimeout(() => this.loadEnigmes(), 1000);
 
                 } catch (error) {
                     console.error('Error starting game:', error);
@@ -3824,14 +3838,25 @@
                         return;
                     }
 
-                    // Ouvrir le jeu avec le token existant
+                    // Ouvrir le jeu dans l'iframe avec le token existant
+                    this.currentGameEnigmaId = enigmaId;
                     const gameUrl = `/game.html?token=${progress.game_token}`;
-                    window.open(gameUrl, '_blank', 'width=1200,height=800');
+                    document.getElementById('gameIframe').src = gameUrl;
+                    document.getElementById('gameContainer').style.display = 'block';
+                    document.body.style.overflow = 'hidden';
 
                 } catch (error) {
                     console.error('Error resuming game:', error);
                     showToast('❌ Erreur lors de la reprise du jeu', 'error');
                 }
+            },
+
+            closeGame() {
+                document.getElementById('gameContainer').style.display = 'none';
+                document.getElementById('gameIframe').src = '';
+                document.body.style.overflow = 'auto';
+                // Rafraîchir les énigmes pour voir le nouvel état
+                this.loadEnigmes();
             },
 
             // Appelé par le jeu quand il est terminé (via postMessage)
@@ -4811,11 +4836,15 @@
 
             // Écouter les messages du jeu (Épreuve Finale)
             window.addEventListener('message', async (event) => {
-                // Vérifier l'origine si nécessaire
                 if (event.data && event.data.type === 'GAME_COMPLETE') {
                     const { token, score, totalTimeMs } = event.data;
                     console.log('Game complete received:', { token, score, totalTimeMs });
                     await hdnApp.handleGameComplete(token, score, totalTimeMs);
+                }
+
+                // Fermer le jeu quand demandé
+                if (event.data && event.data.type === 'GAME_CLOSE_REQUEST') {
+                    hdnApp.closeGame();
                 }
             });
         });

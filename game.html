@@ -430,14 +430,27 @@
 
     // Envoyer le score à l'application parente
     function sendScoreToParent(score, totalTimeMs) {
-      // Envoyer via postMessage à la fenêtre parente/opener
-      if (window.opener) {
-        window.opener.postMessage({
+      // Envoyer via postMessage à la fenêtre parente (iframe) ou opener (nouvelle fenêtre)
+      const targetWindow = window.parent !== window ? window.parent : window.opener;
+      if (targetWindow) {
+        targetWindow.postMessage({
           type: 'GAME_COMPLETE',
           token: gameToken,
           score: score,
           totalTimeMs: totalTimeMs
         }, '*');
+      }
+    }
+
+    // Demander la fermeture du jeu
+    function requestCloseGame() {
+      const targetWindow = window.parent !== window ? window.parent : window.opener;
+      if (targetWindow) {
+        targetWindow.postMessage({
+          type: 'GAME_CLOSE_REQUEST'
+        }, '*');
+      } else {
+        window.close();
       }
     }
 
@@ -1425,12 +1438,8 @@
     // Fermer la fenêtre et retourner à l'app
     function closeAndGoToQR() {
       // Le score a déjà été envoyé via postMessage
-      // Fermer cette fenêtre
-      window.close();
-      // Si la fenêtre ne se ferme pas (restrictions navigateur), afficher un message
-      setTimeout(() => {
-        alert('Tu peux maintenant fermer cette fenêtre et retourner à l\'application pour chercher le QR Code !');
-      }, 500);
+      // Demander la fermeture du jeu (iframe ou fenêtre)
+      requestCloseGame();
     }
 
     function startGame(forceNew = false) {
