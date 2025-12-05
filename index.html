@@ -1226,6 +1226,13 @@
             section.style.display = checkbox.checked ? 'block' : 'none';
         }
 
+        // Toggle game clues section
+        function toggleGameCluesSection() {
+            const checkbox = document.getElementById('enigmaHasGame');
+            const section = document.getElementById('gameCluesSection');
+            section.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
         // Remove audio
         let audioToRemove = false;
         function removeAudio() {
@@ -2041,13 +2048,59 @@
 
                     <h3>🎮 Épreuve Finale (optionnel)</h3>
                     <label>
-                        <input type="checkbox" id="enigmaHasGame" style="width: auto; margin-right: 10px;" />
+                        <input type="checkbox" id="enigmaHasGame" style="width: auto; margin-right: 10px;" onchange="toggleGameCluesSection()" />
                         Cette énigme inclut le jeu "Épreuve Finale" avant le QR Code
                     </label>
                     <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
                         ⚠️ Si coché, le joueur devra compléter le jeu de plateforme avant de pouvoir chercher le QR Code.
                         Le score du jeu donne des points bonus.
                     </p>
+
+                    <!-- Section indices du jeu (cachée par défaut) -->
+                    <div id="gameCluesSection" style="display: none; margin-top: 15px; padding: 20px; background: linear-gradient(135deg, #1a1a2e, #16213e); border: 2px solid #81FE0E; border-radius: 10px;">
+                        <h4 style="color: #81FE0E; margin: 0 0 15px 0;">🔍 Indices cachés dans le jeu</h4>
+                        <p style="color: #fff; font-size: 0.85em; margin-bottom: 15px;">
+                            Configure les 4 indices que les joueurs découvriront en complétant les niveaux.
+                        </p>
+                        
+                        <div style="display: grid; gap: 15px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="gameClueLevel1" style="width: 120px; padding: 8px;">
+                                    <option value="3">Niveau 3</option>
+                                    <option value="4">Niveau 4</option>
+                                    <option value="5">Niveau 5</option>
+                                    <option value="6">Niveau 6</option>
+                                </select>
+                                <input type="text" id="gameClue1" placeholder="Indice 1 (ex: NOEL)" style="flex: 1;" />
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="gameClueLevel2" style="width: 120px; padding: 8px;">
+                                    <option value="5">Niveau 5</option>
+                                    <option value="6">Niveau 6</option>
+                                    <option value="7">Niveau 7</option>
+                                    <option value="8">Niveau 8</option>
+                                </select>
+                                <input type="text" id="gameClue2" placeholder="Indice 2" style="flex: 1;" />
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="gameClueLevel3" style="width: 120px; padding: 8px;">
+                                    <option value="8">Niveau 8</option>
+                                    <option value="9">Niveau 9</option>
+                                    <option value="10">Niveau 10</option>
+                                    <option value="11">Niveau 11</option>
+                                </select>
+                                <input type="text" id="gameClue3" placeholder="Indice 3" style="flex: 1;" />
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="gameClueLevel4" style="width: 120px; padding: 8px;">
+                                    <option value="10">Niveau 10</option>
+                                    <option value="11">Niveau 11</option>
+                                    <option value="12" selected>Niveau 12</option>
+                                </select>
+                                <input type="text" id="gameClue4" placeholder="Indice 4" style="flex: 1;" />
+                            </div>
+                        </div>
+                    </div>
 
                     <h3>💡 Indices (optionnels)</h3>
                     <label>Indice 1</label>
@@ -3726,7 +3779,7 @@
 
                     // Générer un token de jeu sécurisé via RPC
                     const { data: token, error } = await supabase.rpc('start_game_session', {
-                        p_enigma_id: enigmaId,
+                        p_enigma_id: String(enigmaId),
                         p_player_id: this.currentUser.id,
                         p_team_id: this.currentUser.team_id || null
                     });
@@ -4128,6 +4181,24 @@
                     document.getElementById('enigmaLocation').value = enigma.location;
                     document.getElementById('enigmaValidation').value = enigma.validation_type;
                     document.getElementById('enigmaHasGame').checked = enigma.has_game || false;
+
+                    // Game clues setup
+                    const hasGameChecked = enigma.has_game || false;
+                    document.getElementById('gameCluesSection').style.display = hasGameChecked ? 'block' : 'none';
+                    if (enigma.game_clues && Array.isArray(enigma.game_clues)) {
+                        enigma.game_clues.forEach((clue, index) => {
+                            const levelEl = document.getElementById(`gameClueLevel${index + 1}`);
+                            const clueEl = document.getElementById(`gameClue${index + 1}`);
+                            if (levelEl) levelEl.value = clue.level || '';
+                            if (clueEl) clueEl.value = clue.text || '';
+                        });
+                    } else {
+                        // Reset game clues
+                        for (let i = 1; i <= 4; i++) {
+                            document.getElementById(`gameClue${i}`).value = '';
+                        }
+                    }
+
                     document.getElementById('enigmaHint1').value = enigma.hint1 || '';
                     document.getElementById('enigmaHint2').value = enigma.hint2 || '';
                     document.getElementById('enigmaHint3').value = enigma.hint3 || '';
@@ -4181,6 +4252,19 @@
                 const location = document.getElementById('enigmaLocation').value.trim();
                 const validationType = document.getElementById('enigmaValidation').value;
                 const hasGame = document.getElementById('enigmaHasGame').checked;
+
+                // Récupérer les indices du jeu
+                const gameClues = [];
+                if (hasGame) {
+                    for (let i = 1; i <= 4; i++) {
+                        const level = document.getElementById(`gameClueLevel${i}`).value;
+                        const text = document.getElementById(`gameClue${i}`).value.trim();
+                        if (text) {
+                            gameClues.push({ level: parseInt(level), text: text });
+                        }
+                    }
+                }
+
                 const hint1 = document.getElementById('enigmaHint1').value.trim();
                 const hint2 = document.getElementById('enigmaHint2').value.trim();
                 const hint3 = document.getElementById('enigmaHint3').value.trim();
@@ -4229,6 +4313,7 @@
                             qr_secret: qrSecret,
                             validation_type: validationType,
                             has_game: hasGame,
+                            game_clues: gameClues.length > 0 ? gameClues : null,
                             hint1: hint1 || null,
                             hint2: hint2 || null,
                             hint3: hint3 || null,
@@ -4289,6 +4374,19 @@
                 const location = document.getElementById('enigmaLocation').value.trim();
                 const validationType = document.getElementById('enigmaValidation').value;
                 const hasGame = document.getElementById('enigmaHasGame').checked;
+
+                // Récupérer les indices du jeu
+                const gameClues = [];
+                if (hasGame) {
+                    for (let i = 1; i <= 4; i++) {
+                        const level = document.getElementById(`gameClueLevel${i}`).value;
+                        const text = document.getElementById(`gameClue${i}`).value.trim();
+                        if (text) {
+                            gameClues.push({ level: parseInt(level), text: text });
+                        }
+                    }
+                }
+
                 const hint1 = document.getElementById('enigmaHint1').value.trim();
                 const hint2 = document.getElementById('enigmaHint2').value.trim();
                 const hint3 = document.getElementById('enigmaHint3').value.trim();
@@ -4327,6 +4425,7 @@
                             location: location,
                             validation_type: validationType,
                             has_game: hasGame,
+                            game_clues: gameClues.length > 0 ? gameClues : null,
                             hint1: hint1 || null,
                             hint2: hint2 || null,
                             hint3: hint3 || null,
@@ -4380,6 +4479,12 @@
                 document.getElementById('enigmaHint2').value = '';
                 document.getElementById('enigmaHint3').value = '';
                 document.getElementById('enigmaPublished').checked = false;
+
+                // Reset game clues
+                document.getElementById('gameCluesSection').style.display = 'none';
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`gameClue${i}`).value = '';
+                }
 
                 // Reset audio fields
                 document.getElementById('enigmaHasAudio').checked = false;

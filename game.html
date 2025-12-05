@@ -412,7 +412,16 @@
           return false;
         }
 
-        return data && data.valid;
+        if (data && data.valid) {
+          // Stocker les indices dynamiques si disponibles
+          if (data.game_clues && Array.isArray(data.game_clues)) {
+            dynamicClues = data.game_clues;
+            console.log('Dynamic clues loaded:', dynamicClues);
+          }
+          return true;
+        }
+
+        return false;
       } catch (e) {
         console.error('Token validation exception:', e);
         return false;
@@ -730,12 +739,32 @@
       4: { name: 'Zone 4', color: '#a78bfa', bgStart: '#1a0a2e', bgEnd: '#2d1b4e' }
     };
 
-    const clueTexts = {
-      3: "Couleur préférée de HDN",
-      6: "C",
-      9: "🧭",
-      12: "XXV"
+    // Indices par défaut (utilisés si pas de token ou pas d'indices configurés)
+    const defaultClueTexts = {
+      3: "INDICE 1",
+      6: "INDICE 2",
+      9: "INDICE 3",
+      12: "INDICE 4"
     };
+
+    // Indices dynamiques chargés depuis l'API (configurés dans l'admin)
+    let dynamicClues = null;
+
+    // Fonction pour obtenir les indices (dynamiques ou par défaut)
+    function getClueTexts() {
+      if (dynamicClues && dynamicClues.length > 0) {
+        // Convertir le tableau [{level: 3, text: "..."}, ...] en objet {3: "...", ...}
+        const clues = {};
+        dynamicClues.forEach(clue => {
+          clues[clue.level] = clue.text;
+        });
+        return clues;
+      }
+      return defaultClueTexts;
+    }
+
+    // Alias pour la compatibilité
+    const clueTexts = defaultClueTexts;
 
     function selectColor(color) {
       playerColor = color;
@@ -1713,7 +1742,8 @@
       }
 
       // ===== COLLECTE DE L'INDICE =====
-      if (level.clue && !tempClueCollected && clueTexts[currentLevel]) {
+      const currentClues = getClueTexts();
+      if (level.clue && !tempClueCollected && currentClues[currentLevel]) {
         const dist = Math.sqrt(Math.pow(player.x - level.clue.x, 2) + Math.pow(player.y - level.clue.y, 2));
         if (dist < 40) {
           tempClueCollected = true;
@@ -1726,8 +1756,8 @@
         if (isTutorialMode) {
           nextTutorialLevel();
         } else {
-          if (tempClueCollected && clueTexts[currentLevel]) {
-            collectedClues.push(clueTexts[currentLevel]);
+          if (tempClueCollected && currentClues[currentLevel]) {
+            collectedClues.push(currentClues[currentLevel]);
           }
           nextLevel();
         }
@@ -1844,7 +1874,7 @@
       ctx.font = 'bold 40px Arial';
       ctx.fillText('🏁', level.goal.x - 15, level.goal.y + 15);
 
-      if (level.clue && !tempClueCollected && clueTexts[currentLevel]) {
+      if (level.clue && !tempClueCollected && getClueTexts()[currentLevel]) {
         ctx.font = 'bold 40px Arial';
         ctx.fillText('📜', level.clue.x - 15, level.clue.y + 15);
         ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
