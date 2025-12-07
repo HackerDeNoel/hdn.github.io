@@ -465,6 +465,19 @@
             nav button {
                 width: 100%;
             }
+
+            /* Masquer les boutons du jeu sur mobile */
+            .game-buttons-desktop {
+                display: none !important;
+            }
+            
+            .game-desktop-warning {
+                display: none !important;
+            }
+            
+            .game-mobile-warning {
+                display: block !important;
+            }
         }
 
         /* Hide/Show utilities */
@@ -2619,19 +2632,21 @@
                                                 < 30 min : +200 pts | < 45 min : +100 pts | < 1h : +50 pts
                                             </p>
                                         </div>
-                                        ${progress.game_started_at ? `
-                                            <p style="color: #ff9800; margin: 15px 0;">
-                                                ⏱️ Partie en cours depuis ${this.formatGameTime(progress.game_started_at)}
-                                            </p>
-                                            <button class="btn btn-success" style="font-size: 1.2em; padding: 15px 40px;" onclick="hdnApp.resumeGame(${enigma.id})">
-                                                ▶️ Reprendre le jeu
-                                            </button>
-                                        ` : `
-                                            <button class="btn btn-success" style="font-size: 1.2em; padding: 15px 40px;" onclick="hdnApp.startGame(${enigma.id})">
-                                                🚀 Lancer le jeu !
-                                            </button>
-                                        `}
-                                        <p style="color: #888; margin: 15px 0 0 0; font-size: 0.8em;">
+                                        <div class="game-buttons-desktop">
+                                            ${progress.game_started_at ? `
+                                                <button class="btn btn-success" style="font-size: 1.2em; padding: 15px 40px;" onclick="hdnApp.resumeGame(${enigma.id})">
+                                                    ▶️ Reprendre le jeu
+                                                </button>
+                                            ` : `
+                                                <button class="btn btn-success" style="font-size: 1.2em; padding: 15px 40px;" onclick="hdnApp.startGame(${enigma.id})">
+                                                    🚀 Lancer le jeu !
+                                                </button>
+                                            `}
+                                        </div>
+                                        <p class="game-mobile-warning" style="color: #ff9800; margin: 15px 0 0 0; font-size: 0.95em; display: none;">
+                                            💻 Le jeu nécessite un ordinateur. Ouvre cette page sur un PC pour jouer !
+                                        </p>
+                                        <p class="game-desktop-warning" style="color: #888; margin: 15px 0 0 0; font-size: 0.8em;">
                                             ⚠️ Le jeu nécessite un ordinateur (pas de mobile)
                                         </p>
                                     </div>

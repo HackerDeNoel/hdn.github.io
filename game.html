@@ -462,6 +462,20 @@
     let tempClueCollected = false;
 
     // ═══════════════════════════════════════════════════════════════════
+    // ███ CHECKPOINTS - Niveaux de sauvegarde ███
+    // ═══════════════════════════════════════════════════════════════════
+    const CHECKPOINTS = [1, 3, 7]; // Niveaux checkpoint (on recommence ici si on perd toutes ses vies)
+
+    // Retourne le dernier checkpoint atteint
+    function getLastCheckpoint(level) {
+      let checkpoint = 1;
+      for (const cp of CHECKPOINTS) {
+        if (level >= cp) checkpoint = cp;
+      }
+      return checkpoint;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // ███ CONFIGURATION SCORING - BONUS TEMPS ███
     // ═══════════════════════════════════════════════════════════════════
     const SCORING = {
@@ -570,6 +584,40 @@
             { x: 320, y: 420, w: 60, h: 30 },
             { x: 720, y: 420, w: 60, h: 30 }
           ]
+        },
+        {
+          message: "🟣 Les trampolines te font rebondir très haut ! Utilise-les pour atteindre des plateformes inaccessibles.",
+          width: 1000,
+          height: 600,
+          platforms: [
+            { x: 0, y: 550, w: 250, h: 50 },
+            { x: 700, y: 250, w: 300, h: 50 }
+          ],
+          trampolines: [
+            { x: 300, y: 530, w: 150, h: 20, angle: 0 }
+          ],
+          goal: { x: 850, y: 220 },
+          spawnX: 50,
+          spawnY: 500,
+          obstacles: []
+        },
+        {
+          message: "🧱 Wall Jump ! Saute contre un mur, puis appuie de nouveau sur SAUT pour rebondir. Alterne entre les murs pour monter !",
+          width: 600,
+          height: 800,
+          platforms: [
+            { x: 0, y: 750, w: 200, h: 50 },
+            { x: 400, y: 750, w: 200, h: 50 },
+            // Murs verticaux pour le wall jump
+            { x: 200, y: 200, w: 30, h: 550 },
+            { x: 370, y: 200, w: 30, h: 550 },
+            // Plateforme d'arrivée en haut
+            { x: 230, y: 100, w: 140, h: 20 }
+          ],
+          goal: { x: 300, y: 70 },
+          spawnX: 80,
+          spawnY: 700,
+          obstacles: []
         }
       ]
     };
@@ -1721,11 +1769,19 @@
                 }
 
                 if (lives <= 0) {
-                  // PAS DE GAME OVER - Reset au niveau 1, chrono continue !
+                  // Reset au dernier checkpoint, chrono continue !
                   lives = GAME_CONFIG.startingLives;
-                  currentLevel = 1;
-                  collectedClues = [];
-                  showDeathMessage();
+                  const checkpoint = getLastCheckpoint(currentLevel);
+                  currentLevel = checkpoint;
+                  // Garder uniquement les indices collectés jusqu'au checkpoint
+                  const clues = getClueTexts();
+                  collectedClues = collectedClues.filter(c => {
+                    for (const [lvl, text] of Object.entries(clues)) {
+                      if (text === c && parseInt(lvl) < checkpoint) return true;
+                    }
+                    return false;
+                  });
+                  showCheckpointMessage(checkpoint);
                 }
                 resetLevel();
                 saveGameState();
@@ -1787,11 +1843,19 @@
             }
 
             if (lives <= 0) {
-              // PAS DE GAME OVER - Reset au niveau 1, chrono continue !
+              // Reset au dernier checkpoint, chrono continue !
               lives = GAME_CONFIG.startingLives;
-              currentLevel = 1;
-              collectedClues = [];
-              showDeathMessage();
+              const checkpoint = getLastCheckpoint(currentLevel);
+              currentLevel = checkpoint;
+              // Garder uniquement les indices collectés jusqu'au checkpoint
+              const clues = getClueTexts();
+              collectedClues = collectedClues.filter(c => {
+                for (const [lvl, text] of Object.entries(clues)) {
+                  if (text === c && parseInt(lvl) < checkpoint) return true;
+                }
+                return false;
+              });
+              showCheckpointMessage(checkpoint);
             }
             resetLevel();
             saveGameState();
@@ -1802,18 +1866,22 @@
     }
 
     // Message de mort (pas de blocage, juste un flash)
-    function showDeathMessage() {
+    function showCheckpointMessage(checkpoint) {
       const msg = document.createElement('div');
       msg.style.cssText = `
         position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: #dc2626; color: white; padding: 30px 50px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 30px 50px;
         border-radius: 15px; font-size: 20px; font-weight: bold; z-index: 9999;
-        text-align: center; box-shadow: 0 0 40px rgba(220,38,38,0.6);
-        font-family: Orbitron, sans-serif; border: 2px solid #fff;
+        text-align: center; box-shadow: 0 0 40px rgba(129,254,14,0.4);
+        font-family: Orbitron, sans-serif; border: 2px solid #81FE0E;
       `;
-      msg.innerHTML = '💀 Retour au niveau 1 !<br><span style="font-size:14px;opacity:0.8;">Le chrono continue...</span>';
+      if (checkpoint === 1) {
+        msg.innerHTML = '💀 Retour au début !<br><span style="font-size:14px;opacity:0.8;">Le chrono continue...</span>';
+      } else {
+        msg.innerHTML = `🚩 Checkpoint niveau ${checkpoint} !<br><span style="font-size:14px;opacity:0.8;color:#81FE0E;">Tu recommences ici</span>`;
+      }
       document.body.appendChild(msg);
-      setTimeout(() => msg.remove(), 1500);
+      setTimeout(() => msg.remove(), 1800);
     }
 
     // Game Over screen (non utilisé - le jeu ne s'arrête jamais)
