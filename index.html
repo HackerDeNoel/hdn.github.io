@@ -3911,6 +3911,38 @@
             },
 
             // Appelé par le jeu quand il est terminé (via postMessage)
+            // Vérifier si l'équipe a déjà complété le jeu
+            async checkTeamGameStatus(token) {
+                try {
+                    // Chercher la progression avec ce token
+                    const { data: progress } = await supabase
+                        .from('enigma_progress')
+                        .select('game_completed_at, team_id')
+                        .eq('game_token', token)
+                        .maybeSingle();
+
+                    if (!progress) return false;
+
+                    // Si c'est un joueur solo, vérifier sa propre progression
+                    if (!progress.team_id) {
+                        return progress.game_completed_at !== null;
+                    }
+
+                    // Si c'est une équipe, vérifier si n'importe quel membre a déjà complété
+                    const { data: teamProgress } = await supabase
+                        .from('enigma_progress')
+                        .select('game_completed_at')
+                        .eq('team_id', progress.team_id)
+                        .not('game_completed_at', 'is', null)
+                        .limit(1);
+
+                    return teamProgress && teamProgress.length > 0;
+                } catch (error) {
+                    console.error('Error checking team game status:', error);
+                    return false;
+                }
+            },
+
             async handleGameComplete(token, score, totalTimeMs) {
                 try {
                     // Appeler la fonction RPC pour terminer le jeu
@@ -3919,12 +3951,23 @@
                         p_score: score
                     });
 
-                    if (error || !success) {
+                    if (error) {
                         console.error('Error completing game:', error);
                         return false;
                     }
 
-                    // Ajouter les points bonus au joueur/équipe
+                    // Si complete_game retourne false, l'équipe a déjà complété
+                    // Dans ce cas, on n'ajoute PAS les points
+                    if (!success) {
+                        console.log('Game already completed by team, no points awarded');
+                        showToast('👥 Le jeu a déjà été validé par ton équipe !', 'info');
+                        // Rafraîchir quand même l'affichage
+                        await this.loadEnigmes();
+                        await this.loadUserData();
+                        return false;
+                    }
+
+                    // Ajouter les points bonus au joueur/équipe (seulement si c'est le premier)
                     if (score > 0) {
                         await this.awardPoints(score);
                     }
@@ -4891,6 +4934,21 @@
                     const { token, score, totalTimeMs } = event.data;
                     console.log('Game complete received:', { token, score, totalTimeMs });
                     await hdnApp.handleGameComplete(token, score, totalTimeMs);
+                }
+
+                // Vérifier si l'équipe a déjà complété le jeu
+                if (event.data && event.data.type === 'GAME_CHECK_TEAM_STATUS') {
+                    const { token } = event.data;
+                    const alreadyCompleted = await hdnApp.checkTeamGameStatus(token);
+
+                    // Répondre au jeu
+                    const gameFrame = document.getElementById('gameFrame');
+                    if (gameFrame && gameFrame.contentWindow) {
+                        gameFrame.contentWindow.postMessage({
+                            type: 'GAME_TEAM_STATUS',
+                            alreadyCompleted: alreadyCompleted
+                        }, '*');
+                    }
                 }
 
                 // Fermer le jeu quand demandé
