@@ -854,7 +854,7 @@
     // Indices par défaut (utilisés si pas de token ou pas d'indices configurés)
     const defaultClueTexts = {
       3: "INDICE 1",
-      6: "INDICE 2",
+      5: "INDICE 2",
       9: "INDICE 3",
       12: "INDICE 4"
     };
@@ -1104,7 +1104,6 @@
           { x: 810, y: 1190, w: 30, h: 20, angle: 0 }
         ],
         goal: { x: 1750, y: 1170 },
-        clue: { x: 820, y: 1160 },
         spawnX: 50,
         spawnY: 1100
       },
@@ -1960,9 +1959,9 @@
           let canPerformWallJump = false;
           if (config.mode === 'transformice') canPerformWallJump = true;
           else if (config.mode === 'mario') {
-            if (effectiveWallSide === 'right' && (keys['ArrowLeft'] || keys['a'] || keys['q'])) {
+            if (effectiveWallSide === 'right' && (keys['ArrowLeft'] || keys['a'] || keys['q'] || keys['ArrowUp'])) {
               canPerformWallJump = true;
-            } else if (effectiveWallSide === 'left' && (keys['ArrowRight'] || keys['d'])) {
+            } else if (effectiveWallSide === 'left' && (keys['ArrowRight'] || keys['d'] || keys['ArrowUp'])) {
               canPerformWallJump = true;
             }
           }
