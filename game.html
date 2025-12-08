@@ -338,6 +338,29 @@
     <div id="timer">⏱️ 00:00</div>
     <div id="points">🏆 0 pts</div>
   </div>
+
+  <!-- Bouton Quitter Tutoriel -->
+  <button id="quitTutorialBtn" onclick="endTutorial()" style="
+    display: none;
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    background: transparent;
+    color: #ff6b6b;
+    border: 2px solid #ff6b6b;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    z-index: 1000;
+    transition: all 0.2s;
+  " onmouseover="this.style.background='#ff6b6b';this.style.color='#000'"
+          onmouseout="this.style.background='transparent';this.style.color='#ff6b6b'">
+    ✕ Quitter le tutoriel
+  </button>
+
   <canvas
           id="gameCanvas"
           width="1200"
@@ -666,12 +689,15 @@
       document.getElementById('ui').classList.remove('hidden');
       document.getElementById('gameCanvas').classList.remove('hidden');
 
-      // Afficher le niveau, masquer timer/points/vies
-      document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
+      // Afficher Tutoriel X/5, masquer timer/points/vies
+      document.getElementById('level').textContent = `Tutoriel 1/${TUTORIAL_CONFIG.levels.length}`;
       document.getElementById('level').style.display = 'block';
       document.getElementById('timer').style.display = 'none';
       document.getElementById('points').style.display = 'none';
       document.getElementById('lives').style.display = 'none';
+
+      // Afficher le bouton quitter tutoriel
+      document.getElementById('quitTutorialBtn').style.display = 'block';
 
       loadTutorialLevel();
       gameRunning = true;
@@ -692,6 +718,7 @@
       // Afficher le message du tutoriel
       showTutorialMessage(tutoLevel.message);
 
+      // Mettre à jour le compteur
       document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
     }
 
@@ -714,6 +741,9 @@
       document.getElementById('timer').style.display = 'block';
       document.getElementById('points').style.display = 'block';
       document.getElementById('lives').style.display = 'block';
+
+      // Masquer le bouton quitter tutoriel
+      document.getElementById('quitTutorialBtn').style.display = 'none';
 
       document.getElementById('ui').classList.add('hidden');
       document.getElementById('gameCanvas').classList.add('hidden');
