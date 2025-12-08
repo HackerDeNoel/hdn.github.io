@@ -666,8 +666,9 @@
       document.getElementById('ui').classList.remove('hidden');
       document.getElementById('gameCanvas').classList.remove('hidden');
 
-      // Afficher "TUTORIEL" au lieu du niveau, masquer timer/points
+      // Afficher le niveau, masquer timer/points/vies
       document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
+      document.getElementById('level').style.display = 'block';
       document.getElementById('timer').style.display = 'none';
       document.getElementById('points').style.display = 'none';
       document.getElementById('lives').style.display = 'none';
@@ -1956,11 +1957,16 @@
         });
       }
 
+      // Reset style pour les emojis (évite le rendu noir/transparent)
+      ctx.fillStyle = '#000000';
+      ctx.globalAlpha = 1;
+
       ctx.font = 'bold 40px Arial';
       ctx.fillText('🏁', level.goal.x - 15, level.goal.y + 15);
 
       // Drapeau checkpoint au spawn (si niveau checkpoint)
       if (level.checkpoint && !isTutorialMode) {
+        ctx.fillStyle = '#000000';
         ctx.font = 'bold 35px Arial';
         ctx.fillText('🚩', level.spawnX - 10, level.spawnY - 5);
         // Texte "CHECKPOINT" en petit
@@ -1972,6 +1978,7 @@
       }
 
       if (level.clue && !tempClueCollected && getClueTexts()[currentLevel]) {
+        ctx.fillStyle = '#000000';
         ctx.font = 'bold 40px Arial';
         ctx.fillText('📜', level.clue.x - 15, level.clue.y + 15);
         ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
@@ -1991,6 +1998,8 @@
             ctx.beginPath();
             ctx.arc(light.x, light.y, 40, 0, Math.PI * 2);
             ctx.fill();
+            // Reset pour l'emoji
+            ctx.fillStyle = '#000000';
             ctx.font = 'bold 30px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
