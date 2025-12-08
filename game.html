@@ -339,28 +339,6 @@
     <div id="points">🏆 0 pts</div>
   </div>
 
-  <!-- Bouton Quitter Tutoriel -->
-  <button id="quitTutorialBtn" onclick="endTutorial()" style="
-    display: none;
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    background: transparent;
-    color: #ff6b6b;
-    border: 2px solid #ff6b6b;
-    padding: 10px 25px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 14px;
-    z-index: 1000;
-    transition: all 0.2s;
-  " onmouseover="this.style.background='#ff6b6b';this.style.color='#000'"
-          onmouseout="this.style.background='transparent';this.style.color='#ff6b6b'">
-    ✕ Quitter le tutoriel
-  </button>
-
   <canvas
           id="gameCanvas"
           width="1200"
@@ -369,6 +347,22 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    // Gestion du clic sur le canvas (pour le bouton "Quitter tutoriel")
+    canvas.addEventListener('click', function (e) {
+      if (!isTutorialMode || !window.quitTutorialBtnBounds) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+
+      const btn = window.quitTutorialBtnBounds;
+      if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
+        endTutorial();
+      }
+    });
 
     // ═══════════════════════════════════════════════════════════════════
     // ███ CONFIGURATION GLOBALE - POUR INTÉGRATION DANS L'APP HDN ███
@@ -522,7 +516,6 @@
     // ███ SYSTÈME ANTI-TRICHE - LE CHRONO NE S'ARRÊTE JAMAIS ███
     // ═══════════════════════════════════════════════════════════════════
     const GAME_STORAGE_KEY = GAME_CONFIG.storageKey;
-    const VICTORY_STORAGE_KEY = GAME_CONFIG.storageKey + '_victory';
 
     function saveGameState() {
       const state = {
@@ -551,7 +544,9 @@
       localStorage.removeItem(GAME_STORAGE_KEY);
     }
 
-    // Sauvegarder l'état de victoire (pour pouvoir revenir à l'écran de fin)
+    // Sauvegarde de l'état de victoire (pour pouvoir revenir à l'écran de fin)
+    const VICTORY_STORAGE_KEY = GAME_CONFIG.storageKey + '_victory';
+
     function saveVictoryState(score, time, clues, hasRetried) {
       const state = {
         completed: true,
@@ -725,9 +720,6 @@
       document.getElementById('points').style.display = 'none';
       document.getElementById('lives').style.display = 'none';
 
-      // Afficher le bouton quitter tutoriel
-      document.getElementById('quitTutorialBtn').style.display = 'block';
-
       loadTutorialLevel();
       gameRunning = true;
       requestAnimationFrame(gameLoop);
@@ -770,9 +762,6 @@
       document.getElementById('timer').style.display = 'block';
       document.getElementById('points').style.display = 'block';
       document.getElementById('lives').style.display = 'block';
-
-      // Masquer le bouton quitter tutoriel
-      document.getElementById('quitTutorialBtn').style.display = 'none';
 
       document.getElementById('ui').classList.add('hidden');
       document.getElementById('gameCanvas').classList.add('hidden');
@@ -1494,17 +1483,17 @@
       }, 200);
     }
 
-    // Variable pour stocker le statut de l'équipe
-    let teamAlreadyCompleted = false;
+    // Variable pour le timeout de vérification équipe
+    let teamCheckTimeout = null;
+    let teamStatusReceived = false;
 
     function showVictory(isRetry = false) {
       gameRunning = false;
-      clearGameState(); // Victoire = on peut effacer la session de jeu
+      clearGameState();
       hideTutorial();
       document.getElementById('ui').classList.add('hidden');
       document.getElementById('gameCanvas').classList.add('hidden');
 
-      // Calculer le score final
       const finalScore = calculateFinalScore();
 
       // Charger l'état de victoire précédent pour savoir si c'est un retry
@@ -1519,17 +1508,32 @@
         GAME_CONFIG.onGameComplete(totalTime, finalScore, collectedClues);
       }
 
-      // Si on a un token, demander à l'app si l'équipe a déjà complété
+      // Si on a un token et qu'on est dans une iframe, vérifier le statut équipe
       if (gameToken && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'GAME_CHECK_TEAM_STATUS',
-          token: gameToken
-        }, '*');
+        teamStatusReceived = false;
 
         // Afficher un écran de chargement temporaire
         showVictoryLoading(finalScore);
+
+        // Envoyer la demande de vérification
+        try {
+          window.parent.postMessage({
+            type: 'GAME_CHECK_TEAM_STATUS',
+            token: gameToken
+          }, '*');
+        } catch (e) {
+          console.log('PostMessage failed, showing default screen');
+        }
+
+        // Timeout de 2 secondes : si pas de réponse, afficher l'écran par défaut
+        teamCheckTimeout = setTimeout(() => {
+          if (!teamStatusReceived) {
+            console.log('No response from parent, showing default victory screen');
+            displayVictoryScreen(finalScore, hasAlreadyRetried, false);
+          }
+        }, 2000);
       } else {
-        // Pas de token = mode standalone, afficher directement
+        // Pas de token ou pas dans iframe = mode standalone
         displayVictoryScreen(finalScore, hasAlreadyRetried, false);
       }
     }
@@ -1549,6 +1553,12 @@
 
     // Afficher l'écran de victoire final
     function displayVictoryScreen(finalScore, hasAlreadyRetried, isTeamAlreadyCompleted) {
+      // Annuler le timeout si encore actif
+      if (teamCheckTimeout) {
+        clearTimeout(teamCheckTimeout);
+        teamCheckTimeout = null;
+      }
+
       // Supprimer l'ancien écran si présent
       const oldVictory = document.getElementById('victory');
       if (oldVictory) oldVictory.remove();
@@ -1558,7 +1568,7 @@
       victoryDiv.style.cssText = 'position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;padding:20px;text-align:center;overflow-y:auto;font-family:Orbitron,sans-serif;';
 
       if (isTeamAlreadyCompleted) {
-        // L'équipe a déjà complété → pas de bouton QR, juste Recommencer
+        // L'équipe a déjà complété → pas de bouton QR
         victoryDiv.innerHTML = `
           <h1 style="font-size:48px;margin-bottom:20px;background:linear-gradient(135deg,#81FE0E,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎉 VICTOIRE ! 🎉</h1>
           <p style="font-size:20px;margin-bottom:10px;">Temps total: <strong>${formatTime(totalTime)}</strong></p>
@@ -1591,7 +1601,7 @@
           </div>
         `;
       } else {
-        // Premier de l'équipe → écran normal avec bouton QR
+        // Premier de l'équipe → écran normal avec bouton QR + Recommencer
         victoryDiv.innerHTML = `
           <h1 style="font-size:48px;margin-bottom:20px;background:linear-gradient(135deg,#81FE0E,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎉 VICTOIRE ! 🎉</h1>
           <p style="font-size:20px;margin-bottom:10px;">Temps total: <strong>${formatTime(totalTime)}</strong></p>
@@ -1631,8 +1641,8 @@
     // Écouter la réponse de l'app concernant le statut de l'équipe
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'GAME_TEAM_STATUS') {
+        teamStatusReceived = true;
         const { alreadyCompleted } = event.data;
-        teamAlreadyCompleted = alreadyCompleted;
 
         // Charger l'état de victoire
         const victoryState = loadVictoryState();
@@ -1644,12 +1654,40 @@
       }
     });
 
+    // Recommencer le jeu (une seule fois autorisé pour le premier)
+    function retryGame() {
+      const victoryDiv = document.getElementById('victory');
+      if (victoryDiv) victoryDiv.remove();
+
+      // Marquer qu'on a déjà retry
+      const victoryState = loadVictoryState();
+      if (victoryState) {
+        victoryState.hasRetried = true;
+        localStorage.setItem(VICTORY_STORAGE_KEY, JSON.stringify(victoryState));
+      }
+
+      // Réinitialiser le jeu
+      currentLevel = 1;
+      lives = GAME_CONFIG.startingLives;
+      collectedClues = [];
+      gameStartTime = Date.now();
+      totalTime = 0;
+      tempClueCollected = false;
+
+      document.getElementById('ui').classList.remove('hidden');
+      document.getElementById('gameCanvas').classList.remove('hidden');
+      gameRunning = true;
+      resetLevel();
+      updateUI();
+      saveGameState();
+      requestAnimationFrame(gameLoop);
+    }
+
     // Rejouer sans limite (pour les équipes qui ont déjà complété)
     function retryGameUnlimited() {
       const victoryDiv = document.getElementById('victory');
       if (victoryDiv) victoryDiv.remove();
 
-      // Réinitialiser le jeu
       currentLevel = 1;
       lives = GAME_CONFIG.startingLives;
       collectedClues = [];
@@ -1665,41 +1703,24 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // Quitter sans aller au QR (pour les équipes qui ont déjà complété)
+    // Quitter sans aller au QR
     function closeGameOnly() {
       clearVictoryState();
       requestCloseGame();
     }
 
-    // Recommencer le jeu (une seule fois autorisé)
-    function retryGame() {
-      // Supprimer l'écran de victoire
-      const victoryDiv = document.getElementById('victory');
-      if (victoryDiv) victoryDiv.remove();
-
-      // Marquer qu'on a déjà retry
+    // Fermer la fenêtre et retourner à l'app
+    function closeAndGoToQR() {
+      // Charger l'état de victoire pour envoyer le score final
       const victoryState = loadVictoryState();
-      if (victoryState) {
-        victoryState.hasRetried = true;
-        localStorage.setItem(VICTORY_STORAGE_KEY, JSON.stringify(victoryState));
+      if (victoryState && gameToken) {
+        sendScoreToParent(victoryState.score, victoryState.totalTime);
       }
 
-      // Réinitialiser le jeu
-      currentLevel = 1;
-      lives = GAME_CONFIG.startingLives;
-      collectedClues = [];
-      gameStartTime = Date.now(); // Nouveau chrono
-      totalTime = 0;
-      tempClueCollected = false;
-
-      // Relancer le jeu
-      document.getElementById('ui').classList.remove('hidden');
-      document.getElementById('gameCanvas').classList.remove('hidden');
-      gameRunning = true;
-      resetLevel();
-      updateUI();
-      saveGameState();
-      requestAnimationFrame(gameLoop);
+      // Nettoyer l'état de victoire
+      clearVictoryState();
+      // Demander la fermeture du jeu
+      requestCloseGame();
     }
 
     // Afficher l'écran de victoire sauvegardé (quand on revient via "Reprendre")
@@ -1711,40 +1732,34 @@
       totalTime = victoryState.totalTime;
       collectedClues = victoryState.collectedClues;
 
-      // Si on a un token, demander à l'app si l'équipe a déjà complété
+      // Si on a un token, vérifier le statut équipe
       if (gameToken && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'GAME_CHECK_TEAM_STATUS',
-          token: gameToken
-        }, '*');
-
-        // Afficher un écran de chargement temporaire
+        teamStatusReceived = false;
         showVictoryLoading(victoryState.score);
+
+        try {
+          window.parent.postMessage({
+            type: 'GAME_CHECK_TEAM_STATUS',
+            token: gameToken
+          }, '*');
+        } catch (e) {
+          console.log('PostMessage failed');
+        }
+
+        teamCheckTimeout = setTimeout(() => {
+          if (!teamStatusReceived) {
+            displayVictoryScreen(victoryState.score, victoryState.hasRetried, false);
+          }
+        }, 2000);
       } else {
-        // Pas de token = mode standalone, afficher directement
         displayVictoryScreen(victoryState.score, victoryState.hasRetried, false);
       }
-    }
-
-    // Fermer la fenêtre et retourner à l'app
-    function closeAndGoToQR() {
-      // Charger l'état de victoire pour envoyer le score final
-      const victoryState = loadVictoryState();
-      if (victoryState && gameToken) {
-        sendScoreToParent(victoryState.score, victoryState.totalTime);
-      }
-
-      // Nettoyer l'état de victoire (le jeu est vraiment terminé)
-      clearVictoryState();
-      // Demander la fermeture du jeu (iframe ou fenêtre)
-      requestCloseGame();
     }
 
     function startGame(forceNew = false) {
       // Vérifier si le jeu a déjà été terminé
       const victoryState = loadVictoryState();
       if (victoryState && victoryState.completed && !forceNew) {
-        // Afficher l'écran de victoire sauvegardé
         showSavedVictory(victoryState);
         return;
       }
@@ -2306,6 +2321,39 @@
       }
 
       ctx.restore();
+
+      // Bouton "Quitter le tutoriel" dessiné dans le canvas (en bas à droite)
+      if (isTutorialMode) {
+        const btnText = '✕ Quitter le tutoriel';
+        const btnPadding = 12;
+        const btnFontSize = 14;
+        ctx.font = `bold ${btnFontSize}px Orbitron, sans-serif`;
+        const textWidth = ctx.measureText(btnText).width;
+        const btnWidth = textWidth + btnPadding * 2;
+        const btnHeight = btnFontSize + btnPadding * 2;
+        const btnX = canvas.width - btnWidth - 15;
+        const btnY = canvas.height - btnHeight - 15;
+
+        // Stocker les coordonnées pour la détection de clic
+        window.quitTutorialBtnBounds = { x: btnX, y: btnY, w: btnWidth, h: btnHeight };
+
+        // Dessiner le fond du bouton
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnWidth, btnHeight, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        // Dessiner le texte
+        ctx.fillStyle = '#ff6b6b';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(btnText, btnX + btnWidth / 2, btnY + btnHeight / 2);
+        ctx.textAlign = 'start';
+        ctx.textBaseline = 'alphabetic';
+      }
 
       // ===== AFFICHAGE DEBUG WALL JUMP (optionnel) =====
       // Décommente pour voir le mode actif et la stamina (mode Celeste)
