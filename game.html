@@ -666,10 +666,11 @@
       document.getElementById('ui').classList.remove('hidden');
       document.getElementById('gameCanvas').classList.remove('hidden');
 
-      // Afficher "TUTORIEL" au lieu du niveau
+      // Afficher "TUTORIEL" au lieu du niveau, masquer timer/points
       document.getElementById('level').textContent = `Tutoriel ${tutorialLevel + 1}/${TUTORIAL_CONFIG.levels.length}`;
-      document.getElementById('timer').textContent = '⏱️ --:--';
-      document.getElementById('points').textContent = '🏆 ---';
+      document.getElementById('timer').style.display = 'none';
+      document.getElementById('points').style.display = 'none';
+      document.getElementById('lives').style.display = 'none';
 
       loadTutorialLevel();
       gameRunning = true;
@@ -707,6 +708,11 @@
       isTutorialMode = false;
       gameRunning = false;
       hideTutorial();
+
+      // Réafficher timer/points/vies pour le vrai jeu
+      document.getElementById('timer').style.display = 'block';
+      document.getElementById('points').style.display = 'block';
+      document.getElementById('lives').style.display = 'block';
 
       document.getElementById('ui').classList.add('hidden');
       document.getElementById('gameCanvas').classList.add('hidden');
@@ -880,6 +886,7 @@
       3: {
         width: 2000,
         height: 1200,
+        checkpoint: true, // 🚩 Checkpoint - recommence ici si game over
         platforms: [
           { x: 0, y: 1190, w: 210, h: 30 },
           { x: 300, y: 1100, w: 50, h: 20 },
@@ -985,6 +992,7 @@
       7: {
         width: 2000,
         height: 1200,
+        checkpoint: true, // 🚩 Checkpoint - recommence ici si game over
         platforms: [
           { x: 0, y: 1140, w: 150, h: 60 },
           { x: 220, y: 910, w: 110, h: 20 },
@@ -1950,6 +1958,18 @@
 
       ctx.font = 'bold 40px Arial';
       ctx.fillText('🏁', level.goal.x - 15, level.goal.y + 15);
+
+      // Drapeau checkpoint au spawn (si niveau checkpoint)
+      if (level.checkpoint && !isTutorialMode) {
+        ctx.font = 'bold 35px Arial';
+        ctx.fillText('🚩', level.spawnX - 10, level.spawnY - 5);
+        // Texte "CHECKPOINT" en petit
+        ctx.font = 'bold 10px Orbitron, sans-serif';
+        ctx.fillStyle = '#81FE0E';
+        ctx.textAlign = 'center';
+        ctx.fillText('CHECKPOINT', level.spawnX + 5, level.spawnY - 35);
+        ctx.textAlign = 'start';
+      }
 
       if (level.clue && !tempClueCollected && getClueTexts()[currentLevel]) {
         ctx.font = 'bold 40px Arial';
