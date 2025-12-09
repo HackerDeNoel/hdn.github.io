@@ -3844,7 +3844,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `/game.html?token=${token}`;
+                    const gameUrl = `game.html?token=${token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -3901,12 +3901,13 @@
                 // Fade out
                 container.style.opacity = '0';
 
-                setTimeout(() => {
+                setTimeout(async () => {
                     container.style.display = 'none';
                     document.getElementById('gameIframe').src = '';
                     document.body.style.overflow = 'auto';
-                    // Rafraîchir les énigmes pour voir le nouvel état
-                    this.loadEnigmes();
+                    // Rafraîchir les énigmes et les données utilisateur pour voir le nouvel état
+                    await this.loadEnigmes();
+                    await this.loadUserData();
                 }, 300);
             },
 
@@ -4929,11 +4930,15 @@
             hdnApp.init();
 
             // Écouter les messages du jeu (Épreuve Finale)
+            let gameCompleteInProgress = false;
+
             window.addEventListener('message', async (event) => {
                 if (event.data && event.data.type === 'GAME_COMPLETE') {
                     const { token, score, totalTimeMs } = event.data;
                     console.log('Game complete received:', { token, score, totalTimeMs });
+                    gameCompleteInProgress = true;
                     await hdnApp.handleGameComplete(token, score, totalTimeMs);
+                    gameCompleteInProgress = false;
                 }
 
                 // Vérifier si l'équipe a déjà complété le jeu
@@ -4942,9 +4947,9 @@
                     const alreadyCompleted = await hdnApp.checkTeamGameStatus(token);
 
                     // Répondre au jeu
-                    const gameFrame = document.getElementById('gameFrame');
-                    if (gameFrame && gameFrame.contentWindow) {
-                        gameFrame.contentWindow.postMessage({
+                    const gameIframe = document.getElementById('gameIframe');
+                    if (gameIframe && gameIframe.contentWindow) {
+                        gameIframe.contentWindow.postMessage({
                             type: 'GAME_TEAM_STATUS',
                             alreadyCompleted: alreadyCompleted
                         }, '*');
@@ -4953,6 +4958,16 @@
 
                 // Fermer le jeu quand demandé
                 if (event.data && event.data.type === 'GAME_CLOSE_REQUEST') {
+                    // Attendre que handleGameComplete soit terminé si en cours
+                    if (gameCompleteInProgress) {
+                        console.log('Waiting for game complete to finish...');
+                        // Attendre max 5 secondes
+                        let waited = 0;
+                        while (gameCompleteInProgress && waited < 5000) {
+                            await new Promise(r => setTimeout(r, 100));
+                            waited += 100;
+                        }
+                    }
                     hdnApp.closeGame();
                 }
             });
