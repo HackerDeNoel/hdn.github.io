@@ -2676,7 +2676,7 @@
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                             ${enigma.game_clues.map(clue => `
                                                 <div style="background: #343973; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold;">
-                                                    ${clue}
+                                                    ${typeof clue === 'object' ? clue.text : clue}
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -3622,7 +3622,7 @@
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                     ${enigma.game_clues.map(clue => `
                                         <div style="background: #343973; color: white; padding: 10px; border-radius: 6px; text-align: center; font-size: 0.9em;">
-                                            ${clue}
+                                            ${typeof clue === 'object' ? clue.text : clue}
                                         </div>
                                     `).join('')}
                                 </div>
