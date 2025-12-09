@@ -882,6 +882,7 @@
             <button onclick="hdnApp.showSection('home')">🏠 Accueil</button>
             <button id="enigmaNavBtn" onclick="hdnApp.showSection('enigmes')">💡 Énigmes</button>
             <button onclick="hdnApp.showSection('ranking')">🏆 Classement</button>
+            <button class="hidden" id="minigameNavBtn" onclick="hdnApp.showSection('minigame')">🎮 Mini-jeu</button>
             <button onclick="hdnApp.showSection('rules')">📋 Règles</button>
             <button class="hidden" id="adminNavBtn" onclick="hdnApp.showSection('admin')">⚙️ Admin</button>
         </nav>
@@ -1129,6 +1130,29 @@
             <div class="card">
                 <h2>🏆 Classement</h2>
                 <div id="rankingList" class="loading">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- MINIGAME SECTION -->
+        <div class="section" id="minigame-section">
+            <div class="card">
+                <h2>🎮 Mini-jeu - Classement</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                    Meilleurs temps de l'Épreuve Finale - Classement individuel
+                </p>
+
+                <!-- Bouton pour jouer -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <button class="btn btn-success" style="font-size: 1.1em; padding: 15px 30px;"
+                            onclick="hdnApp.playMinigame()">
+                        🎮 Jouer pour le fun !
+                    </button>
+                    <p style="font-size: 0.85em; color: #888; margin-top: 10px;">
+                        Améliore ton temps et bats le record !
+                    </p>
+                </div>
+
+                <div id="minigameLeaderboard" class="loading">Chargement...</div>
             </div>
         </div>
 
@@ -1996,7 +2020,7 @@
                 }
             },
 
-            showMainApp() {
+            async showMainApp() {
                 // Hide auth section
                 document.getElementById('auth-section').classList.remove('active');
 
@@ -2015,6 +2039,9 @@
                         floatingRulesBtn.style.display = 'none';
                     }
                 }
+
+                // Vérifier si l'onglet mini-jeu doit être affiché
+                await this.checkMinigameAccess();
 
                 // Show home section
                 this.showSection('home');
@@ -2385,6 +2412,8 @@
                     this.loadEnigmes();
                 } else if (sectionName === 'ranking') {
                     this.loadClassement();
+                } else if (sectionName === 'minigame') {
+                    this.loadGameLeaderboard();
                 } else if (sectionName === 'admin') {
                     this.loadAdminPanel();
                 } else if (sectionName === 'home') {
@@ -3787,6 +3816,9 @@
                     showToast('🏃 C\'est parti ! Trouve le QR Code le plus vite possible !', 'success');
                     await this.loadEnigmes();
 
+                    // Vérifier si l'onglet mini-jeu doit apparaître
+                    await this.checkMinigameAccess();
+
                 } catch (error) {
                     console.error('Error starting QR hunt:', error);
                     showToast('❌ Erreur lors du lancement', 'error');
@@ -3960,6 +3992,8 @@
                     // Rafraîchir les énigmes et les données utilisateur pour voir le nouvel état
                     await this.loadEnigmes();
                     await this.loadUserData();
+                    // Vérifier si l'onglet mini-jeu doit apparaître
+                    await this.checkMinigameAccess();
                 }, 300);
             },
 
@@ -3996,8 +4030,15 @@
                 }
             },
 
-            async handleGameComplete(token, score, totalTimeMs) {
+            async handleGameComplete(token, score, totalTimeMs, deaths = 0) {
                 try {
+                    // Récupérer l'enigma_id et player_id à partir du token
+                    const { data: progress } = await supabase
+                        .from('enigma_progress')
+                        .select('enigma_id, player_id')
+                        .eq('game_token', token)
+                        .maybeSingle();
+
                     // Appeler la fonction RPC pour terminer le jeu
                     const { data: success, error } = await supabase.rpc('complete_game', {
                         p_token: token,
@@ -4007,6 +4048,21 @@
                     if (error) {
                         console.error('Error completing game:', error);
                         return false;
+                    }
+
+                    // Enregistrer le score dans le leaderboard (même si l'équipe a déjà complété)
+                    // Cela permet aux joueurs de continuer à améliorer leur temps personnel
+                    if (progress && progress.enigma_id && this.currentUser) {
+                        try {
+                            await supabase.rpc('submit_game_score', {
+                                p_player_id: this.currentUser.id,
+                                p_enigma_id: progress.enigma_id,
+                                p_time_ms: totalTimeMs,
+                                p_deaths: deaths
+                            });
+                        } catch (e) {
+                            console.log('Could not submit to leaderboard:', e);
+                        }
                     }
 
                     // Si complete_game retourne false, l'équipe a déjà complété
@@ -4149,6 +4205,199 @@
                 } catch (error) {
                     console.error('Error loading ranking:', error);
                     container.innerHTML = '<p style="color: #ff4444;">Erreur lors du chargement du classement.</p>';
+                }
+            },
+
+            // ========== MINI-JEU LEADERBOARD ==========
+
+            gameEnigmaId: null, // ID de l'énigme avec has_game
+
+            async loadGameLeaderboard() {
+                const container = document.getElementById('minigameLeaderboard');
+                if (!container) return;
+
+                container.innerHTML = '<div class="loading">Chargement du classement...</div>';
+
+                try {
+                    // Trouver l'énigme avec has_game
+                    const { data: gameEnigma } = await supabase
+                        .from('enigmas')
+                        .select('id')
+                        .eq('has_game', true)
+                        .eq('published', true)
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (!gameEnigma) {
+                        container.innerHTML = '<p style="text-align: center; color: #666;">Aucun mini-jeu disponible.</p>';
+                        return;
+                    }
+
+                    this.gameEnigmaId = gameEnigma.id;
+
+                    // Récupérer le classement
+                    const { data: leaderboard, error } = await supabase.rpc('get_game_leaderboard', {
+                        p_enigma_id: gameEnigma.id
+                    });
+
+                    if (error) {
+                        console.error('Error loading leaderboard:', error);
+                        container.innerHTML = '<p style="color: #ff4444;">Erreur lors du chargement du classement.</p>';
+                        return;
+                    }
+
+                    if (!leaderboard || leaderboard.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #666;">Aucun score enregistré. Sois le premier à terminer le jeu !</p>';
+                        return;
+                    }
+
+                    // Afficher le classement
+                    let html = `
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <thead>
+                                <tr style="background: #343973; color: white;">
+                                    <th style="padding: 12px; text-align: center; border-radius: 8px 0 0 0;">#</th>
+                                    <th style="padding: 12px; text-align: left;">Joueur</th>
+                                    <th style="padding: 12px; text-align: center;">⏱️ Temps</th>
+                                    <th style="padding: 12px; text-align: center; border-radius: 0 8px 0 0;">💀 Morts</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    leaderboard.forEach((entry, index) => {
+                        // Formater le temps
+                        const totalSec = Math.floor(entry.time_ms / 1000);
+                        const min = Math.floor(totalSec / 60);
+                        const sec = totalSec % 60;
+                        const timeStr = `${min}:${sec.toString().padStart(2, '0')}`;
+
+                        // Médaille pour le top 3
+                        let medal = '';
+                        if (index === 0) medal = '🥇';
+                        else if (index === 1) medal = '🥈';
+                        else if (index === 2) medal = '🥉';
+
+                        // Highlight si c'est l'utilisateur actuel
+                        const isCurrentUser = entry.player_id === this.currentUser?.id;
+                        const rowStyle = isCurrentUser
+                            ? 'background: rgba(129, 254, 14, 0.15); font-weight: bold;'
+                            : (index % 2 === 0 ? 'background: #f8f9fa;' : '');
+
+                        html += `
+                            <tr style="${rowStyle}">
+                                <td style="padding: 12px; text-align: center; font-weight: bold;">
+                                    ${medal || entry.rank}
+                                </td>
+                                <td style="padding: 12px;">
+                                    ${entry.player_name}
+                                    ${isCurrentUser ? '<span style="color: #81FE0E; margin-left: 8px;">← Toi</span>' : ''}
+                                </td>
+                                <td style="padding: 12px; text-align: center; font-family: monospace; font-size: 1.1em;">
+                                    ${timeStr}
+                                </td>
+                                <td style="padding: 12px; text-align: center;">
+                                    ${entry.deaths}
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    html += '</tbody></table>';
+
+                    // Ajouter la date de mise à jour
+                    html += `
+                        <p style="text-align: center; color: #888; font-size: 0.85em; margin-top: 15px;">
+                            Classement basé sur le meilleur temps de chaque joueur
+                        </p>
+                    `;
+
+                    container.innerHTML = html;
+
+                } catch (error) {
+                    console.error('Error loading game leaderboard:', error);
+                    container.innerHTML = '<p style="color: #ff4444;">Erreur lors du chargement du classement.</p>';
+                }
+            },
+
+            async playMinigame() {
+                if (!this.gameEnigmaId) {
+                    // Trouver l'énigme avec has_game
+                    const { data: gameEnigma } = await supabase
+                        .from('enigmas')
+                        .select('id')
+                        .eq('has_game', true)
+                        .eq('published', true)
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (!gameEnigma) {
+                        showToast('❌ Aucun mini-jeu disponible', 'error');
+                        return;
+                    }
+                    this.gameEnigmaId = gameEnigma.id;
+                }
+
+                // Générer un token de jeu
+                const { data: token, error } = await supabase.rpc('start_game_session', {
+                    p_enigma_id: String(this.gameEnigmaId),
+                    p_player_id: String(this.currentUser.id),
+                    p_team_id: this.currentUser.team_id ? String(this.currentUser.team_id) : null
+                });
+
+                if (error || !token) {
+                    console.error('Error starting minigame:', error);
+                    showToast('❌ Erreur lors du lancement du jeu', 'error');
+                    return;
+                }
+
+                // Afficher le jeu
+                const gameUrl = `game.html?token=${token}`;
+                const container = document.getElementById('gameContainer');
+                const iframe = document.getElementById('gameIframe');
+
+                iframe.src = gameUrl;
+                container.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+
+                requestAnimationFrame(() => {
+                    container.style.opacity = '1';
+                });
+
+                showToast('🎮 Bonne chance !', 'success');
+            },
+
+            // Vérifier si l'onglet mini-jeu doit être affiché
+            async checkMinigameAccess() {
+                try {
+                    // Trouver l'énigme avec has_game
+                    const { data: gameEnigma } = await supabase
+                        .from('enigmas')
+                        .select('id')
+                        .eq('has_game', true)
+                        .eq('published', true)
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (!gameEnigma) {
+                        document.getElementById('minigameNavBtn')?.classList.add('hidden');
+                        return;
+                    }
+
+                    // Vérifier si le joueur a commencé la chasse au QR
+                    const progress = await this.getProgress(gameEnigma.id);
+
+                    // Afficher l'onglet si qr_hunt_started_at est défini
+                    const minigameBtn = document.getElementById('minigameNavBtn');
+                    if (minigameBtn) {
+                        if (progress && progress.qr_hunt_started_at) {
+                            minigameBtn.classList.remove('hidden');
+                        } else {
+                            minigameBtn.classList.add('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking minigame access:', error);
                 }
             },
 
@@ -4986,10 +5235,10 @@
 
             window.addEventListener('message', async (event) => {
                 if (event.data && event.data.type === 'GAME_COMPLETE') {
-                    const { token, score, totalTimeMs } = event.data;
-                    console.log('Game complete received:', { token, score, totalTimeMs });
+                    const { token, score, totalTimeMs, deaths } = event.data;
+                    console.log('Game complete received:', { token, score, totalTimeMs, deaths });
                     gameCompleteInProgress = true;
-                    await hdnApp.handleGameComplete(token, score, totalTimeMs);
+                    await hdnApp.handleGameComplete(token, score, totalTimeMs, deaths || 0);
                     gameCompleteInProgress = false;
                 }
 

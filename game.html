@@ -454,7 +454,8 @@
           type: 'GAME_COMPLETE',
           token: gameToken,
           score: score,
-          totalTimeMs: totalTimeMs
+          totalTimeMs: totalTimeMs,
+          deaths: deathCount
         }, '*');
       }
     }
@@ -1621,6 +1622,16 @@
               <strong style="font-size:18px;color:#81FE0E;">🎯 Trouvez le QR Code caché !</strong>
             </p>
           </div>
+          
+          ${!hasAlreadyRetried ? `
+          <div style="background:rgba(255,170,0,0.15);border:2px solid #ffaa00;padding:15px 25px;border-radius:10px;margin-bottom:20px;max-width:500px;">
+            <p style="color:#ffaa00;margin:0;font-size:14px;">
+              ⚠️ <strong>Attention :</strong> Si tu cliques sur "Chercher le QR Code", tes indices seront définitifs.<br>
+              <span style="opacity:0.8;">Tu peux recommencer une fois pour tenter d'avoir de meilleurs indices !</span>
+            </p>
+          </div>
+          ` : ''}
+          
           ${gameToken ? `
             <div style="display:flex;gap:15px;flex-wrap:wrap;justify-content:center;">
               <button onclick="closeAndGoToQR()" style="padding:20px 40px;font-size:18px;background:#81FE0E;color:#000;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(129,254,14,0.4);font-weight:bold;font-family:Orbitron,sans-serif;">
@@ -1634,7 +1645,7 @@
                 <p style="color:#888;font-size:14px;margin-top:10px;">Tu as déjà utilisé ta seconde chance !</p>
               `}
             </div>
-            <p style="font-size:14px;opacity:0.7;margin-top:20px;">${!hasAlreadyRetried ? 'Tu peux recommencer une fois pour améliorer ton score' : 'Clique pour retourner à l\'application'}</p>
+            <p style="font-size:14px;opacity:0.7;margin-top:20px;">${!hasAlreadyRetried ? 'Tu peux recommencer une fois pour améliorer ton score et tes indices' : 'Clique pour retourner à l\'application'}</p>
           ` : `
             <button onclick="location.reload()" style="padding:15px 40px;font-size:18px;background:#343973;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(0,0,0,0.4);font-weight:bold;font-family:Orbitron,sans-serif;">Rejouer 🔄</button>
           `}
