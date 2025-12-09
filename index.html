@@ -3928,7 +3928,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `game.html?token=${token}`;
+                    const gameUrl = `/game.html?token=${token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -3960,7 +3960,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `game.html?token=${progress.game_token}`;
+                    const gameUrl = `/game.html?token=${progress.game_token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -4338,21 +4338,8 @@
                     this.gameEnigmaId = gameEnigma.id;
                 }
 
-                // Générer un token de jeu
-                const { data: token, error } = await supabase.rpc('start_game_session', {
-                    p_enigma_id: String(this.gameEnigmaId),
-                    p_player_id: String(this.currentUser.id),
-                    p_team_id: this.currentUser.team_id ? String(this.currentUser.team_id) : null
-                });
-
-                if (error || !token) {
-                    console.error('Error starting minigame:', error);
-                    showToast('❌ Erreur lors du lancement du jeu', 'error');
-                    return;
-                }
-
-                // Afficher le jeu
-                const gameUrl = `game.html?token=${token}`;
+                // Mode fun - pas besoin de token, juste pour le classement
+                const gameUrl = `/game.html?mode=fun&player_id=${this.currentUser.id}&enigma_id=${this.gameEnigmaId}`;
                 const container = document.getElementById('gameContainer');
                 const iframe = document.getElementById('gameIframe');
 
@@ -4364,7 +4351,7 @@
                     container.style.opacity = '1';
                 });
 
-                showToast('🎮 Bonne chance !', 'success');
+                showToast('🎮 Mode fun ! Bats ton record !', 'success');
             },
 
             // Vérifier si l'onglet mini-jeu doit être affiché
@@ -5240,6 +5227,36 @@
                     gameCompleteInProgress = true;
                     await hdnApp.handleGameComplete(token, score, totalTimeMs, deaths || 0);
                     gameCompleteInProgress = false;
+                }
+
+                // Mode fun - enregistrer le score dans le leaderboard sans points officiels
+                if (event.data && event.data.type === 'GAME_FUN_COMPLETE') {
+                    const { playerId, enigmaId, totalTimeMs, deaths } = event.data;
+                    console.log('Fun game complete received:', { playerId, enigmaId, totalTimeMs, deaths });
+
+                    try {
+                        const { data: improved, error } = await supabase.rpc('submit_game_score', {
+                            p_player_id: parseInt(playerId),
+                            p_enigma_id: parseInt(enigmaId),
+                            p_time_ms: totalTimeMs,
+                            p_deaths: deaths || 0
+                        });
+
+                        if (error) {
+                            console.error('Error submitting fun score:', error);
+                        } else if (improved) {
+                            showToast('🎉 Nouveau record personnel !', 'success');
+                        } else {
+                            showToast('✅ Partie terminée !', 'info');
+                        }
+
+                        // Rafraîchir le classement si on est sur l'onglet mini-jeu
+                        if (document.getElementById('minigame-section').classList.contains('active')) {
+                            await hdnApp.loadGameLeaderboard();
+                        }
+                    } catch (e) {
+                        console.error('Error in fun mode:', e);
+                    }
                 }
 
                 // Vérifier si l'équipe a déjà complété le jeu

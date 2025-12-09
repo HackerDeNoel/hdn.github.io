@@ -450,13 +450,26 @@
       // Envoyer via postMessage à la fenêtre parente (iframe) ou opener (nouvelle fenêtre)
       const targetWindow = window.parent !== window ? window.parent : window.opener;
       if (targetWindow) {
-        targetWindow.postMessage({
-          type: 'GAME_COMPLETE',
-          token: gameToken,
-          score: score,
-          totalTimeMs: totalTimeMs,
-          deaths: deathCount
-        }, '*');
+        // Mode fun (depuis l'onglet mini-jeu) ou mode normal
+        if (window.funModeData) {
+          // Mode fun - envoyer un message différent pour le leaderboard
+          targetWindow.postMessage({
+            type: 'GAME_FUN_COMPLETE',
+            playerId: window.funModeData.playerId,
+            enigmaId: window.funModeData.enigmaId,
+            totalTimeMs: totalTimeMs,
+            deaths: deathCount
+          }, '*');
+        } else {
+          // Mode normal avec token
+          targetWindow.postMessage({
+            type: 'GAME_COMPLETE',
+            token: gameToken,
+            score: score,
+            totalTimeMs: totalTimeMs,
+            deaths: deathCount
+          }, '*');
+        }
       }
     }
 
@@ -1474,32 +1487,6 @@
       player.collectedLights = [];
     }
 
-    function nextLevel() {
-      gameRunning = false;
-      hideTutorial(); // Cacher le tutoriel avant de changer de niveau
-
-      const levelTime = Date.now() - levelStartTime;
-      const clueCollected = tempClueCollected;
-
-      // Callback pour l'intégration
-      if (GAME_CONFIG.onLevelComplete) {
-        GAME_CONFIG.onLevelComplete(currentLevel, levelTime, clueCollected);
-      }
-
-      setTimeout(() => {
-        if (currentLevel === GAME_CONFIG.totalLevels) {
-          showVictory();
-        } else {
-          currentLevel++;
-          levelStartTime = Date.now();
-          resetLevel();
-          saveGameState(); // Sauvegarder la progression
-          updateUI();
-          gameRunning = true;
-        }
-      }, 200);
-    }
-
     // Variable pour le timeout de vérification équipe
     let teamCheckTimeout = null;
     let teamStatusReceived = false;
@@ -1549,6 +1536,10 @@
             displayVictoryScreen(finalScore, hasAlreadyRetried, false);
           }
         }, 2000);
+      } else if (window.funModeData && window.parent !== window) {
+        // Mode fun - envoyer le score au leaderboard immédiatement
+        sendScoreToParent(finalScore, totalTime);
+        displayVictoryScreen(finalScore, hasAlreadyRetried, false);
       } else {
         // Pas de token ou pas dans iframe = mode standalone
         displayVictoryScreen(finalScore, hasAlreadyRetried, false);
@@ -1659,6 +1650,16 @@
               `}
             </div>
             <p style="font-size:14px;opacity:0.7;margin-top:20px;">${!hasAlreadyRetried ? 'Tu peux recommencer une fois pour améliorer ton score et tes indices' : 'Clique pour retourner à l\'application'}</p>
+          ` : window.funModeData ? `
+            <div style="display:flex;gap:15px;flex-wrap:wrap;justify-content:center;">
+              <button onclick="retryGameUnlimited()" style="padding:20px 40px;font-size:18px;background:#81FE0E;color:#000;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(129,254,14,0.4);font-weight:bold;font-family:Orbitron,sans-serif;">
+                🔄 Rejouer
+              </button>
+              <button onclick="requestCloseGame()" style="padding:20px 40px;font-size:18px;background:#343973;color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:bold;font-family:Orbitron,sans-serif;">
+                ✕ Retour au classement
+              </button>
+            </div>
+            <p style="font-size:14px;opacity:0.7;margin-top:20px;">Mode fun - Améliore ton temps !</p>
           ` : `
             <button onclick="location.reload()" style="padding:15px 40px;font-size:18px;background:#343973;color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 5px 20px rgba(0,0,0,0.4);font-weight:bold;font-family:Orbitron,sans-serif;">Rejouer 🔄</button>
           `}
@@ -2464,6 +2465,15 @@
       // Vérifier si on a un token dans l'URL
       gameToken = getTokenFromUrl();
 
+      // Vérifier si on est en mode "fun" (depuis l'onglet mini-jeu)
+      const urlParams = new URLSearchParams(window.location.search);
+      const isFunMode = urlParams.get('mode') === 'fun';
+      const funPlayerId = urlParams.get('player_id');
+      const funEnigmaId = urlParams.get('enigma_id');
+
+      // Stocker pour utilisation ultérieure
+      window.funModeData = isFunMode ? { playerId: funPlayerId, enigmaId: funEnigmaId } : null;
+
       if (gameToken) {
         // Mode intégré - valider le token
         const isValid = await validateToken(gameToken);
@@ -2487,6 +2497,10 @@
 
         console.log('Token validated successfully');
         tokenValidated = true;
+      } else if (isFunMode) {
+        // Mode fun - pas besoin de token, juste pour le classement
+        console.log('Fun mode activated - player:', funPlayerId, 'enigma:', funEnigmaId);
+        tokenValidated = false; // Pas de points officiels en mode fun
       }
 
       const savedState = loadGameState();
