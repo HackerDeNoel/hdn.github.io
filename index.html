@@ -2510,7 +2510,7 @@
                     // Get published enigmas (WITHOUT sensitive data)
                     const { data: enigmas } = await supabase
                         .from('enigmas')
-                        .select('id, number, title, description, image_url, audio_url, location, validation_type, has_game, published, scheduled_at, created_at')
+                        .select('id, number, title, description, image_url, audio_url, location, validation_type, has_game, game_clues, published, scheduled_at, created_at')
                         .eq('published', true)
                         .order('number', { ascending: true });
 
@@ -2665,13 +2665,35 @@
                                 // ═══════════════════════════════════════════════════════════════
                                 // ÉTAPE QR CODE - Flow normal
                                 // ═══════════════════════════════════════════════════════════════
-                                if (enigma.location) {
+
+                                // Déterminer si on affiche les indices du jeu ou l'emplacement classique
+                                const hasGameClues = enigma.has_game && progress.game_completed_at && enigma.game_clues && enigma.game_clues.length > 0;
+
+                                // Générer le HTML pour les indices du jeu
+                                const gameCluesHTML = hasGameClues ? `
+                                    <div style="background: linear-gradient(135deg, #000, #1a1a2e); border: 2px solid #81FE0E; border-radius: 12px; padding: 20px; margin: 15px 0;">
+                                        <h4 style="color: #81FE0E; margin: 0 0 15px 0; text-align: center;">🔍 Tes indices pour trouver le QR Code</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                            ${enigma.game_clues.map(clue => `
+                                                <div style="background: #343973; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold;">
+                                                    ${clue}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : '';
+
+                                // HTML pour l'emplacement classique
+                                const locationHTML = !hasGameClues && enigma.location ?
+                                    `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>` : '';
+
+                                if (enigma.location || hasGameClues) {
                                     if (progress.qr_scanned) {
                                         // Already scanned
                                         content += `<div class="alert alert-success">✅ QR Code scanné ! +${progress.points_earned || 0} points</div>`;
-                                        content += `<div class="alert alert-info">📍 <strong>Emplacement :</strong> ${enigma.location}</div>`;
+                                        content += hasGameClues ? gameCluesHTML : `<div class="alert alert-info">📍 <strong>Emplacement :</strong> ${enigma.location}</div>`;
                                     } else if (progress.qr_hunt_started_at) {
-                                        // Hunt started - show location + timer + scanner
+                                        // Hunt started - show location/clues + timer + scanner
                                         const huntStarted = new Date(progress.qr_hunt_started_at);
                                         const now = new Date();
                                         const elapsedMs = now - huntStarted;
@@ -2695,7 +2717,7 @@
                                         }
 
                                         content += `
-                                            <div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>
+                                            ${hasGameClues ? gameCluesHTML : `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>`}
                                             <div style="background: #f0f9ff; border: 2px solid #343973; border-radius: 10px; padding: 15px; margin: 15px 0; text-align: center;">
                                                 <p style="margin: 0 0 10px 0; font-size: 1.1em;">⏱️ Temps écoulé : <strong id="qrTimer-${enigma.id}">${elapsedMin}:${elapsedSec.toString().padStart(2, '0')}</strong></p>
                                                 <p style="margin: 0; font-size: 1.2em; color: ${currentBonus > 0 ? '#81FE0E' : '#ff4444'};">Bonus actuel : <strong id="qrBonus-${enigma.id}">${bonusText}</strong></p>
@@ -2709,7 +2731,7 @@
                                         // Need to click "Je suis prêt" - OR old system (backward compatible)
                                         if (progress.solved_at && !progress.hasOwnProperty('qr_hunt_started_at')) {
                                             // Old system - show scanner directly for backward compatibility
-                                            content += `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>`;
+                                            content += hasGameClues ? gameCluesHTML : `<div class="alert alert-info">📍 <strong>Emplacement du QR Code :</strong> ${enigma.location}</div>`;
                                             content += `<div class="alert alert-warning">⚠️ Scanne le QR code pour gagner tes points !</div>`;
                                             content += `<button class="btn btn-primary" onclick="hdnApp.openQRScanner(${enigma.id})">📱 Scanner le QR Code</button>`;
                                         } else {
@@ -3568,7 +3590,7 @@
                     // Get enigma info WITHOUT qr_secret
                     const { data: enigma } = await supabase
                         .from('enigmas')
-                        .select('id, number, title, location')
+                        .select('id, number, title, location, has_game, game_clues')
                         .eq('id', enigmaId)
                         .single();
 
@@ -3587,17 +3609,44 @@
                     // Store enigmaId for the callback
                     this.currentScanEnigmaId = enigmaId;
 
+                    // Déterminer si on affiche les indices du jeu
+                    const progress = await this.getProgress(enigmaId);
+                    const hasGameClues = enigma.has_game && progress?.game_completed_at && enigma.game_clues && enigma.game_clues.length > 0;
+
+                    // Générer le contenu (indices ou emplacement)
+                    let hintContent = '';
+                    if (hasGameClues) {
+                        hintContent = `
+                            <div style="margin-bottom: 20px; max-width: 400px;">
+                                <p style="color: #81FE0E; margin-bottom: 10px; font-weight: bold;">🔍 Tes indices :</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    ${enigma.game_clues.map(clue => `
+                                        <div style="background: #343973; color: white; padding: 10px; border-radius: 6px; text-align: center; font-size: 0.9em;">
+                                            ${clue}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        hintContent = `<p style="color: white; margin-bottom: 20px;">Énigme #${enigma.number} - ${enigma.location}</p>`;
+                    }
+
                     // Create modal
                     const modal = document.createElement('div');
                     modal.id = 'qrScannerModal';
                     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;';
                     modal.innerHTML = `
                         <h2 style="color: #81FE0E; margin-bottom: 20px;">📱 Scan le QR Code</h2>
-                        <p style="color: white; margin-bottom: 20px;">Énigme #${enigma.number} - ${enigma.location}</p>
+                        ${hintContent}
                         <div id="qrScanner" style="max-width: 500px; width: 100%;"></div>
                         <button class="btn btn-danger" style="margin-top: 20px;" onclick="hdnApp.closeQRScanner()">❌ Fermer</button>
                     `;
                     document.body.appendChild(modal);
+
+                    // Stocker les infos pour le callback
+                    this.currentScanEnigma = enigma;
+                    this.currentScanHasGameClues = hasGameClues;
 
                     // Initialize scanner
                     this.qrScanner = new Html5Qrcode("qrScanner");
@@ -3683,7 +3732,10 @@
                                 await self.loadUserData();
                             } else {
                                 // Wrong QR - show message and restart scanner
-                                showToast(`❌ Mauvais QR code !\n\nTu dois scanner le QR de l'énigme #${enigma.number}\nEmplacement : ${enigma.location}`, 'error');
+                                const hintMsg = self.currentScanHasGameClues
+                                    ? `Utilise tes indices du jeu pour le trouver !`
+                                    : `Emplacement : ${enigma.location}`;
+                                showToast(`❌ Mauvais QR code !\n\nTu dois scanner le QR de l'énigme #${enigma.number}\n${hintMsg}`, 'error');
 
                                 // Restart scanner after 2 seconds
                                 setTimeout(async () => {
@@ -3844,7 +3896,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `game.html?token=${token}`;
+                    const gameUrl = `/game.html?token=${token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -3876,7 +3928,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `game.html?token=${progress.game_token}`;
+                    const gameUrl = `/game.html?token=${progress.game_token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
