@@ -1462,6 +1462,24 @@
       return 4;
     }
 
+    // Passer au niveau suivant
+    function nextLevel() {
+      currentLevel++;
+
+      // Si on a terminé tous les niveaux, afficher la victoire
+      if (currentLevel > GAME_CONFIG.totalLevels) {
+        showVictory();
+        return;
+      }
+
+      // Sauvegarder la progression
+      saveGameState();
+
+      // Réinitialiser pour le nouveau niveau
+      resetLevel();
+      updateUI();
+    }
+
     function resetLevel() {
       // En mode tutoriel, utiliser loadTutorialLevel à la place
       if (isTutorialMode) {

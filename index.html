@@ -3928,7 +3928,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `/game.html?token=${token}`;
+                    const gameUrl = `game.html?token=${token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -3960,7 +3960,7 @@
 
                     // Afficher le jeu avec transition fluide
                     this.currentGameEnigmaId = enigmaId;
-                    const gameUrl = `/game.html?token=${progress.game_token}`;
+                    const gameUrl = `game.html?token=${progress.game_token}`;
                     const container = document.getElementById('gameContainer');
                     const iframe = document.getElementById('gameIframe');
 
@@ -4220,13 +4220,19 @@
 
                 try {
                     // Trouver l'énigme avec has_game
-                    const { data: gameEnigma } = await supabase
+                    const { data: gameEnigma, error: enigmaError } = await supabase
                         .from('enigmas')
                         .select('id')
                         .eq('has_game', true)
                         .eq('published', true)
                         .limit(1)
                         .maybeSingle();
+
+                    if (enigmaError) {
+                        console.error('Error finding game enigma:', enigmaError);
+                        container.innerHTML = '<p style="color: #ff4444;">Erreur: impossible de trouver l\'énigme du jeu.</p>';
+                        return;
+                    }
 
                     if (!gameEnigma) {
                         container.innerHTML = '<p style="text-align: center; color: #666;">Aucun mini-jeu disponible.</p>';
@@ -4235,14 +4241,24 @@
 
                     this.gameEnigmaId = gameEnigma.id;
 
-                    // Récupérer le classement
+                    // Récupérer le classement via RPC
                     const { data: leaderboard, error } = await supabase.rpc('get_game_leaderboard', {
                         p_enigma_id: gameEnigma.id
                     });
 
                     if (error) {
                         console.error('Error loading leaderboard:', error);
-                        container.innerHTML = '<p style="color: #ff4444;">Erreur lors du chargement du classement.</p>';
+                        // Si la fonction n'existe pas, afficher un message explicite
+                        if (error.code === '42883' || error.message.includes('function')) {
+                            container.innerHTML = `
+                                <div style="text-align: center; padding: 20px;">
+                                    <p style="color: #ff4444; margin-bottom: 10px;">⚠️ Le classement n'est pas encore configuré.</p>
+                                    <p style="color: #666; font-size: 0.9em;">Demande à l'admin d'exécuter le SQL "game_leaderboard.sql"</p>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = `<p style="color: #ff4444;">Erreur: ${error.message}</p>`;
+                        }
                         return;
                     }
 
@@ -4339,7 +4355,7 @@
                 }
 
                 // Mode fun - pas besoin de token, juste pour le classement
-                const gameUrl = `/game.html?mode=fun&player_id=${this.currentUser.id}&enigma_id=${this.gameEnigmaId}`;
+                const gameUrl = `game.html?mode=fun&player_id=${this.currentUser.id}&enigma_id=${this.gameEnigmaId}`;
                 const container = document.getElementById('gameContainer');
                 const iframe = document.getElementById('gameIframe');
 
