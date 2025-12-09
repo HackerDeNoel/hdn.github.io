@@ -2007,9 +2007,9 @@
           let canPerformWallJump = false;
           if (config.mode === 'transformice') canPerformWallJump = true;
           else if (config.mode === 'mario') {
-            if (effectiveWallSide === 'right' && (keys['ArrowLeft'] || keys['a'] || keys['q'])) {
+            if (effectiveWallSide === 'right' && (keys['ArrowLeft'] || keys['a'] || keys['q'] || keys['ArrowUp'])) {
               canPerformWallJump = true;
-            } else if (effectiveWallSide === 'left' && (keys['ArrowRight'] || keys['d'])) {
+            } else if (effectiveWallSide === 'left' && (keys['ArrowRight'] || keys['d'] || keys['ArrowUp'])) {
               canPerformWallJump = true;
             }
           }
