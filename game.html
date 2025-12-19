@@ -403,7 +403,7 @@
     const SUPABASE_URL = 'https://kjziudxhzbwhhnwvmlkt.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqeml1ZHhoemJ3aGhud3ZtbGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTg1MTIsImV4cCI6MjA3ODk3NDUxMn0.clKFjIPw6bO_-VI5epj1Fg7TlXUAAeqgYH4bCMS-uP4';
 
-    let supabase = null;
+    let supabaseClient = null;
     let gameToken = null;
     let tokenValidated = false;
 
@@ -418,9 +418,9 @@
       if (!token) return false;
 
       try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const { data, error } = await supabase.rpc('validate_game_token', {
+        const { data, error } = await supabaseClient.rpc('validate_game_token', {
           p_token: token
         });
 
@@ -514,7 +514,7 @@
       // Paliers de temps (en minutes) et bonus associés
       // Le joueur reçoit le bonus du palier qu'il atteint
       timeBonuses: [
-        { maxMinutes: 30, bonus: 200 },   // < 30 min = 200 pts
+        { maxMinutes: 30, bonus: 150 },   // < 30 min = 150 pts
         { maxMinutes: 45, bonus: 100 },   // < 45 min = 100 pts
         { maxMinutes: 60, bonus: 50 },    // < 1h = 50 pts
         { maxMinutes: 90, bonus: 0 }      // > 1h30 = 0 pts

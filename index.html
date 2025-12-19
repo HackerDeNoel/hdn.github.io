@@ -1250,7 +1250,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqeml1ZHhoemJ3aGhud3ZtbGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzOTg1MTIsImV4cCI6MjA3ODk3NDUxMn0.clKFjIPw6bO_-VI5epj1Fg7TlXUAAeqgYH4bCMS-uP4';
 
         // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Toast Notification System
         function showToast(message, type = 'info') {
@@ -1337,7 +1337,7 @@
         }
 
         // Main Application
-        const hdnApp = {
+        window.hdnApp = {
             currentUser: null,
             selectedMode: null,
             selectedTeamAction: null,
@@ -1367,7 +1367,7 @@
 
                 // Check if player is blocked (anti-IA penalty)
                 if (this.currentUser?.id) {
-                    const { data: player } = await supabase
+                    const { data: player } = await supabaseClient
                         .from('players')
                         .select('enigmas_blocked_until')
                         .eq('id', this.currentUser.id)
@@ -1604,7 +1604,7 @@
                     const hashedPassword = await hashPassword(password);
 
                     // Créer le joueur avec type 'solo'
-                    const { data: player, error: playerError } = await supabase
+                    const { data: player, error: playerError } = await supabaseClient
                         .from('players')
                         .insert([{
                             pseudo: pseudo,
@@ -1659,7 +1659,7 @@
 
                 try {
                     // Vérifier si le pseudo existe déjà
-                    const { data: existing } = await supabase
+                    const { data: existing } = await supabaseClient
                         .from('players')
                         .select('id')
                         .eq('pseudo', playerPseudo)
@@ -1677,7 +1677,7 @@
                     const hashedPassword = await hashPassword(password);
 
                     // 1. Créer le joueur SANS team_id d'abord
-                    const { data: player, error: playerError } = await supabase
+                    const { data: player, error: playerError } = await supabaseClient
                         .from('players')
                         .insert([{
                             pseudo: playerPseudo,
@@ -1694,7 +1694,7 @@
                     if (playerError) throw playerError;
 
                     // 2. Créer l'équipe avec le leader
-                    const { data: team, error: teamError } = await supabase
+                    const { data: team, error: teamError } = await supabaseClient
                         .from('teams')
                         .insert([{
                             name: teamName,
@@ -1706,20 +1706,20 @@
 
                     if (teamError) {
                         // Si erreur, supprimer le joueur créé
-                        await supabase.from('players').delete().eq('id', player.id);
+                        await supabaseClient.from('players').delete().eq('id', player.id);
                         throw teamError;
                     }
 
                     // 3. Mettre à jour le joueur avec team_id
-                    const { error: updateError } = await supabase
+                    const { error: updateError } = await supabaseClient
                         .from('players')
                         .update({ team_id: team.id })
                         .eq('id', player.id);
 
                     if (updateError) {
                         // Nettoyer si erreur
-                        await supabase.from('teams').delete().eq('id', team.id);
-                        await supabase.from('players').delete().eq('id', player.id);
+                        await supabaseClient.from('teams').delete().eq('id', team.id);
+                        await supabaseClient.from('players').delete().eq('id', player.id);
                         throw updateError;
                     }
 
@@ -1762,7 +1762,7 @@
 
                 try {
                     // Find team (only get non-sensitive columns)
-                    const { data: team, error: teamError } = await supabase
+                    const { data: team, error: teamError } = await supabaseClient
                         .from('teams')
                         .select('id, name, code, points')
                         .eq('code', teamCode.toUpperCase())
@@ -1774,7 +1774,7 @@
                     }
 
                     // Check if pseudo exists
-                    const { data: existing } = await supabase
+                    const { data: existing } = await supabaseClient
                         .from('players')
                         .select('id')
                         .eq('pseudo', pseudo)
@@ -1789,7 +1789,7 @@
                     const hashedPassword = await hashPassword(password);
 
                     // Create player
-                    const { data: player, error: playerError } = await supabase
+                    const { data: player, error: playerError } = await supabaseClient
                         .from('players')
                         .insert([{
                             pseudo: pseudo,
@@ -1834,7 +1834,7 @@
                     // Hash password before comparing
                     const hashedPassword = await hashPassword(password);
 
-                    const { data: player, error } = await supabase
+                    const { data: player, error } = await supabaseClient
                         .from('players')
                         .select('id, pseudo, type, points, team_id, is_admin, is_test')
                         .eq('pseudo', pseudo)
@@ -1867,7 +1867,7 @@
 
                 try {
                     // Reload fresh user data (without password) - include enigmas_blocked_until
-                    const { data: player } = await supabase
+                    const { data: player } = await supabaseClient
                         .from('players')
                         .select('id, pseudo, type, points, team_id, is_admin, is_test, enigmas_blocked_until')
                         .eq('id', this.currentUser.id)
@@ -1887,7 +1887,7 @@
 
                     // Load team info if applicable (without sensitive data)
                     if (this.currentUser.team_id) {
-                        const { data: team } = await supabase
+                        const { data: team } = await supabaseClient
                             .from('teams')
                             .select('id, name, code, points, leader')
                             .eq('id', this.currentUser.team_id)
@@ -1996,7 +1996,7 @@
                     // Get all non-test players/teams ranked by points
                     if (this.currentUser.team_id) {
                         // Team ranking
-                        const { data: teams } = await supabase
+                        const { data: teams } = await supabaseClient
                             .from('teams')
                             .select('id, points')
                             .order('points', { ascending: false });
@@ -2005,7 +2005,7 @@
                         document.getElementById('userRank').textContent = rank > 0 ? rank : '-';
                     } else {
                         // Solo ranking (exclude test accounts)
-                        const { data: players } = await supabase
+                        const { data: players } = await supabaseClient
                             .from('players')
                             .select('id, points, is_test')
                             .is('team_id', null)
@@ -2252,7 +2252,7 @@
 
                 try {
                     // Check if pseudo already exists
-                    const { data: existing } = await supabase
+                    const { data: existing } = await supabaseClient
                         .from('players')
                         .select('id')
                         .eq('pseudo', newPseudo)
@@ -2265,7 +2265,7 @@
                     }
 
                     // Update pseudo
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('players')
                         .update({ pseudo: newPseudo })
                         .eq('id', this.currentUser.id);
@@ -2341,7 +2341,7 @@
 
                 try {
                     // Check if team name already exists
-                    const { data: existing } = await supabase
+                    const { data: existing } = await supabaseClient
                         .from('teams')
                         .select('id')
                         .eq('name', newName)
@@ -2354,7 +2354,7 @@
                     }
 
                     // Update team name
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('teams')
                         .update({ name: newName })
                         .eq('id', this.currentUser.team_id);
@@ -2467,7 +2467,7 @@
             async updateCountdown() {
                 try {
                     // Get next scheduled enigma (without sensitive data)
-                    const { data: nextEnigma } = await supabase
+                    const { data: nextEnigma } = await supabaseClient
                         .from('enigmas')
                         .select('id, number, title, scheduled_at, published')
                         .eq('published', false)
@@ -2494,7 +2494,7 @@
 
                         // Auto-publish if not yet published
                         if (!nextEnigma.published) {
-                            await supabase
+                            await supabaseClient
                                 .from('enigmas')
                                 .update({ published: true })
                                 .eq('id', nextEnigma.id);
@@ -2537,7 +2537,7 @@
 
                 try {
                     // Get published enigmas (WITHOUT sensitive data)
-                    const { data: enigmas } = await supabase
+                    const { data: enigmas } = await supabaseClient
                         .from('enigmas')
                         .select('id, number, title, description, image_url, audio_url, location, validation_type, has_game, game_clues, published, scheduled_at, created_at')
                         .eq('published', true)
@@ -2781,7 +2781,7 @@
                             }
                         } else if (!lockStatus.locked) {
                             // Fetch hints securely via RPC
-                            const { data: hintsData } = await supabase.rpc('get_enigma_hints', {
+                            const { data: hintsData } = await supabaseClient.rpc('get_enigma_hints', {
                                 p_enigma_id: enigma.id,
                                 p_player_id: this.currentUser.team_id ? null : this.currentUser.id,
                                 p_team_id: this.currentUser.team_id || null
@@ -2914,7 +2914,7 @@
 
                     // Create new progress
                     console.log('Creating new progress...');
-                    const { data: newProgress, error: insertError } = await supabase
+                    const { data: newProgress, error: insertError } = await supabaseClient
                         .from('enigma_progress')
                         .insert([{
                             player_id: this.currentUser.team_id ? null : this.currentUser.id,
@@ -2970,7 +2970,7 @@
                     throw new Error('Progress ID is missing');
                 }
 
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('enigma_progress')
                     .update({
                         ...updates,
@@ -2988,7 +2988,7 @@
             async requestHint(enigmaId, hintNumber) {
                 try {
                     // Use secure RPC to unlock hint
-                    const { data: result, error } = await supabase.rpc('unlock_hint', {
+                    const { data: result, error } = await supabaseClient.rpc('unlock_hint', {
                         p_enigma_id: enigmaId,
                         p_hint_number: hintNumber,
                         p_player_id: this.currentUser.team_id ? null : this.currentUser.id,
@@ -3304,34 +3304,34 @@
 
                     // Deduct points from player
                     const newPoints = this.currentUser.points - GIVE_UP_COST;
-                    await supabase
+                    await supabaseClient
                         .from('players')
                         .update({ points: newPoints })
                         .eq('id', this.currentUser.id);
 
                     // Deduct from team if applicable
                     if (this.currentUser.team_id) {
-                        const { data: team } = await supabase
+                        const { data: team } = await supabaseClient
                             .from('teams')
                             .select('points')
                             .eq('id', this.currentUser.team_id)
                             .maybeSingle();
 
                         if (team) {
-                            await supabase
+                            await supabaseClient
                                 .from('teams')
                                 .update({ points: team.points - GIVE_UP_COST })
                                 .eq('id', this.currentUser.team_id);
 
                             // Update all team members' points
-                            const { data: teamMembers } = await supabase
+                            const { data: teamMembers } = await supabaseClient
                                 .from('players')
                                 .select('id, points')
                                 .eq('team_id', this.currentUser.team_id);
 
                             if (teamMembers) {
                                 for (const member of teamMembers) {
-                                    await supabase
+                                    await supabaseClient
                                         .from('players')
                                         .update({ points: member.points - GIVE_UP_COST })
                                         .eq('id', member.id);
@@ -3349,7 +3349,7 @@
                     });
 
                     // Get the answer to display
-                    const { data: answerResult } = await supabase
+                    const { data: answerResult } = await supabaseClient
                         .rpc('get_enigma_answer', { p_enigma_id: enigmaId });
 
                     // Show solution in a modal
@@ -3398,14 +3398,14 @@
                     }
 
                     // Get enigma info (WITHOUT answer and qr_secret)
-                    const { data: enigma } = await supabase
+                    const { data: enigma } = await supabaseClient
                         .from('enigmas')
                         .select('id, number, title, validation_type')
                         .eq('id', enigmaId)
                         .single();
 
                     // Use RPC to validate answer securely (answer never leaves server)
-                    const { data: validationResult, error: rpcError } = await supabase
+                    const { data: validationResult, error: rpcError } = await supabaseClient
                         .rpc('validate_enigma_answer', {
                             p_enigma_id: enigmaId,
                             p_answer: answer.toLowerCase().trim()
@@ -3442,7 +3442,7 @@
                         }
 
                         // Create submission for manual validation
-                        const { error } = await supabase
+                        const { error } = await supabaseClient
                             .from('submissions')
                             .insert([{
                                 enigma_id: enigmaId,
@@ -3482,34 +3482,34 @@
 
                                 if (this.currentUser.team_id) {
                                     // Block ALL team members
-                                    await supabase
+                                    await supabaseClient
                                         .from('players')
                                         .update({ enigmas_blocked_until: blockUntil.toISOString() })
                                         .eq('team_id', this.currentUser.team_id);
 
                                     // Deduct 10 points from team
-                                    const { data: team } = await supabase
+                                    const { data: team } = await supabaseClient
                                         .from('teams')
                                         .select('points')
                                         .eq('id', this.currentUser.team_id)
                                         .maybeSingle();
 
                                     if (team) {
-                                        await supabase
+                                        await supabaseClient
                                             .from('teams')
                                             .update({ points: team.points - 10 })
                                             .eq('id', this.currentUser.team_id);
                                     }
 
                                     // Update points for all team members too
-                                    const { data: teamMembers } = await supabase
+                                    const { data: teamMembers } = await supabaseClient
                                         .from('players')
                                         .select('id, points')
                                         .eq('team_id', this.currentUser.team_id);
 
                                     if (teamMembers) {
                                         for (const member of teamMembers) {
-                                            await supabase
+                                            await supabaseClient
                                                 .from('players')
                                                 .update({ points: member.points - 10 })
                                                 .eq('id', member.id);
@@ -3517,14 +3517,14 @@
                                     }
                                 } else {
                                     // Solo player - just block this player
-                                    await supabase
+                                    await supabaseClient
                                         .from('players')
                                         .update({ enigmas_blocked_until: blockUntil.toISOString() })
                                         .eq('id', this.currentUser.id);
 
                                     // Deduct 10 points
                                     const newPoints = this.currentUser.points - 10;
-                                    await supabase
+                                    await supabaseClient
                                         .from('players')
                                         .update({ points: newPoints })
                                         .eq('id', this.currentUser.id);
@@ -3587,21 +3587,21 @@
                 try {
                     // Update player points
                     const newPoints = this.currentUser.points + points;
-                    await supabase
+                    await supabaseClient
                         .from('players')
                         .update({ points: newPoints })
                         .eq('id', this.currentUser.id);
 
                     // Update team points if applicable
                     if (this.currentUser.team_id) {
-                        const { data: team } = await supabase
+                        const { data: team } = await supabaseClient
                             .from('teams')
                             .select('points')
                             .eq('id', this.currentUser.team_id)
                             .maybeSingle();
 
                         if (team) {
-                            await supabase
+                            await supabaseClient
                                 .from('teams')
                                 .update({ points: team.points + points })
                                 .eq('id', this.currentUser.team_id);
@@ -3617,7 +3617,7 @@
             async openQRScanner(enigmaId) {
                 try {
                     // Get enigma info WITHOUT qr_secret
-                    const { data: enigma } = await supabase
+                    const { data: enigma } = await supabaseClient
                         .from('enigmas')
                         .select('id, number, title, location, has_game, game_clues')
                         .eq('id', enigmaId)
@@ -3629,7 +3629,7 @@
                     }
 
                     // Check if QR is configured using RPC
-                    const { data: hasQR } = await supabase.rpc('enigma_has_qr', { p_enigma_id: enigmaId });
+                    const { data: hasQR } = await supabaseClient.rpc('enigma_has_qr', { p_enigma_id: enigmaId });
                     if (!hasQR) {
                         showToast('❌ QR Code non configuré pour cette énigme', 'error');
                         return;
@@ -3692,7 +3692,7 @@
                             await self.qrScanner.stop();
 
                             // Validate QR using RPC (qr_secret never sent to client)
-                            const { data: isValidQR, error: rpcError } = await supabase
+                            const { data: isValidQR, error: rpcError } = await supabaseClient
                                 .rpc('validate_qr_code', {
                                     p_enigma_id: self.currentScanEnigmaId,
                                     p_scanned_code: decodedText
@@ -3904,7 +3904,7 @@
                     }
 
                     // Générer un token de jeu sécurisé via RPC
-                    const { data: token, error } = await supabase.rpc('start_game_session', {
+                    const { data: token, error } = await supabaseClient.rpc('start_game_session', {
                         p_enigma_id: String(enigmaId),
                         p_player_id: String(this.currentUser.id),
                         p_team_id: this.currentUser.team_id ? String(this.currentUser.team_id) : null
@@ -4002,7 +4002,7 @@
             async checkTeamGameStatus(token) {
                 try {
                     // Chercher la progression avec ce token
-                    const { data: progress } = await supabase
+                    const { data: progress } = await supabaseClient
                         .from('enigma_progress')
                         .select('game_completed_at, team_id')
                         .eq('game_token', token)
@@ -4016,7 +4016,7 @@
                     }
 
                     // Si c'est une équipe, vérifier si n'importe quel membre a déjà complété
-                    const { data: teamProgress } = await supabase
+                    const { data: teamProgress } = await supabaseClient
                         .from('enigma_progress')
                         .select('game_completed_at')
                         .eq('team_id', progress.team_id)
@@ -4033,14 +4033,14 @@
             async handleGameComplete(token, score, totalTimeMs, deaths = 0) {
                 try {
                     // Récupérer l'enigma_id et player_id à partir du token
-                    const { data: progress } = await supabase
+                    const { data: progress } = await supabaseClient
                         .from('enigma_progress')
                         .select('enigma_id, player_id')
                         .eq('game_token', token)
                         .maybeSingle();
 
                     // Appeler la fonction RPC pour terminer le jeu
-                    const { data: success, error } = await supabase.rpc('complete_game', {
+                    const { data: success, error } = await supabaseClient.rpc('complete_game', {
                         p_token: token,
                         p_score: score
                     });
@@ -4054,7 +4054,7 @@
                     // Cela permet aux joueurs de continuer à améliorer leur temps personnel
                     if (progress && progress.enigma_id && this.currentUser) {
                         try {
-                            await supabase.rpc('submit_game_score', {
+                            await supabaseClient.rpc('submit_game_score', {
                                 p_player_id: this.currentUser.id,
                                 p_enigma_id: progress.enigma_id,
                                 p_time_ms: totalTimeMs,
@@ -4117,14 +4117,14 @@
 
                 try {
                     // Get solo players (exclude test accounts) - WITHOUT password
-                    const { data: soloPlayers } = await supabase
+                    const { data: soloPlayers } = await supabaseClient
                         .from('players')
                         .select('id, pseudo, points, team_id, is_test')
                         .is('team_id', null)
                         .eq('is_test', false);
 
                     // Get teams
-                    const { data: teams } = await supabase
+                    const { data: teams } = await supabaseClient
                         .from('teams')
                         .select('id, name, points');
 
@@ -4147,7 +4147,7 @@
                     if (teams) {
                         for (const team of teams) {
                             // Get team members
-                            const { data: members } = await supabase
+                            const { data: members } = await supabaseClient
                                 .from('players')
                                 .select('pseudo')
                                 .eq('team_id', team.id);
@@ -4220,7 +4220,7 @@
 
                 try {
                     // Trouver l'énigme avec has_game
-                    const { data: gameEnigma, error: enigmaError } = await supabase
+                    const { data: gameEnigma, error: enigmaError } = await supabaseClient
                         .from('enigmas')
                         .select('id')
                         .eq('has_game', true)
@@ -4242,7 +4242,7 @@
                     this.gameEnigmaId = gameEnigma.id;
 
                     // Récupérer le classement via RPC
-                    const { data: leaderboard, error } = await supabase.rpc('get_game_leaderboard', {
+                    const { data: leaderboard, error } = await supabaseClient.rpc('get_game_leaderboard', {
                         p_enigma_id: gameEnigma.id
                     });
 
@@ -4339,7 +4339,7 @@
             async playMinigame() {
                 if (!this.gameEnigmaId) {
                     // Trouver l'énigme avec has_game
-                    const { data: gameEnigma } = await supabase
+                    const { data: gameEnigma } = await supabaseClient
                         .from('enigmas')
                         .select('id')
                         .eq('has_game', true)
@@ -4374,7 +4374,7 @@
             async checkMinigameAccess() {
                 try {
                     // Trouver l'énigme avec has_game
-                    const { data: gameEnigma } = await supabase
+                    const { data: gameEnigma } = await supabaseClient
                         .from('enigmas')
                         .select('id')
                         .eq('has_game', true)
@@ -4413,9 +4413,9 @@
                 }
 
                 // Load stats
-                const { data: players } = await supabase.from('players').select('id', { count: 'exact' });
-                const { data: enigmas } = await supabase.from('enigmas').select('id', { count: 'exact' });
-                const { data: pending } = await supabase
+                const { data: players } = await supabaseClient.from('players').select('id', { count: 'exact' });
+                const { data: enigmas } = await supabaseClient.from('enigmas').select('id', { count: 'exact' });
+                const { data: pending } = await supabaseClient
                     .from('submissions')
                     .select('id', { count: 'exact' })
                     .eq('status', 'pending');
@@ -4435,7 +4435,7 @@
                 const container = document.getElementById('adminEnigmasList');
 
                 try {
-                    const { data: enigmas } = await supabase
+                    const { data: enigmas } = await supabaseClient
                         .from('enigmas')
                         .select('*')
                         .order('number', { ascending: true });
@@ -4537,7 +4537,7 @@
 
             async togglePublish(enigmaId, shouldPublish) {
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('enigmas')
                         .update({ published: shouldPublish })
                         .eq('id', enigmaId);
@@ -4557,7 +4557,7 @@
                 if (!confirm('Es-tu sûr de vouloir supprimer cette énigme ?')) return;
 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('enigmas')
                         .delete()
                         .eq('id', enigmaId);
@@ -4567,13 +4567,13 @@
                     showToast('✅ Énigme supprimée !', 'success');
 
                     // Renumber remaining enigmas
-                    const { data: remaining } = await supabase
+                    const { data: remaining } = await supabaseClient
                         .from('enigmas')
                         .select('*')
                         .order('number', { ascending: true });
 
                     for (let i = 0; i < remaining.length; i++) {
-                        await supabase
+                        await supabaseClient
                             .from('enigmas')
                             .update({ number: i + 1 })
                             .eq('id', remaining[i].id);
@@ -4589,7 +4589,7 @@
 
             async editEnigma(enigmaId) {
                 try {
-                    const { data: enigma } = await supabase
+                    const { data: enigma } = await supabaseClient
                         .from('enigmas')
                         .select('*')
                         .eq('id', enigmaId)
@@ -4702,7 +4702,7 @@
 
                 try {
                     // Get current enigma to preserve QR secret and audio
-                    const { data: currentEnigma } = await supabase
+                    const { data: currentEnigma } = await supabaseClient
                         .from('enigmas')
                         .select('qr_secret, audio_url')
                         .eq('id', enigmaId)
@@ -4725,7 +4725,7 @@
                         audioUrl = await this.uploadAudio(audioFile, enigmaId);
                     }
 
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('enigmas')
                         .update({
                             title: title,
@@ -4773,7 +4773,7 @@
             async uploadAudio(file, enigmaId) {
                 const fileName = `enigma-${enigmaId}-${Date.now()}.mp3`;
 
-                const { data, error } = await supabase.storage
+                const { data, error } = await supabaseClient.storage
                     .from('audio')
                     .upload(fileName, file, {
                         cacheControl: '3600',
@@ -4783,7 +4783,7 @@
                 if (error) throw error;
 
                 // Get public URL
-                const { data: urlData } = supabase.storage
+                const { data: urlData } = supabaseClient.storage
                     .from('audio')
                     .getPublicUrl(fileName);
 
@@ -4824,7 +4824,7 @@
 
                 try {
                     // Get next number (max + 1)
-                    const { data: existingEnigmas } = await supabase
+                    const { data: existingEnigmas } = await supabaseClient
                         .from('enigmas')
                         .select('number')
                         .order('number', { ascending: false })
@@ -4838,7 +4838,7 @@
                     const qrSecret = 'HDN-E' + nextNumber + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
 
                     // Create enigma first
-                    const { data: newEnigma, error } = await supabase
+                    const { data: newEnigma, error } = await supabaseClient
                         .from('enigmas')
                         .insert([{
                             number: nextNumber,
@@ -4869,7 +4869,7 @@
                         const audioUrl = await this.uploadAudio(audioFile, newEnigma.id);
 
                         // Update enigma with audio URL
-                        await supabase
+                        await supabaseClient
                             .from('enigmas')
                             .update({ audio_url: audioUrl })
                             .eq('id', newEnigma.id);
@@ -4922,7 +4922,7 @@
                 const container = document.getElementById('pendingValidationsList');
 
                 try {
-                    const { data: submissions } = await supabase
+                    const { data: submissions } = await supabaseClient
                         .from('submissions')
                         .select(`
                             *,
@@ -4971,7 +4971,7 @@
             async validateSubmission(submissionId, accepted) {
                 try {
                     // Get submission details
-                    const { data: submission } = await supabase
+                    const { data: submission } = await supabaseClient
                         .from('submissions')
                         .select('*')
                         .eq('id', submissionId)
@@ -4980,7 +4980,7 @@
                     if (!submission) return;
 
                     // Update submission status
-                    await supabase
+                    await supabaseClient
                         .from('submissions')
                         .update({ status: accepted ? 'accepted' : 'rejected' })
                         .eq('id', submissionId);
@@ -5002,7 +5002,7 @@
 
                         if (progress) {
                             // Mark as solved but DON'T calculate points yet (will be done at QR scan)
-                            await supabase
+                            await supabaseClient
                                 .from('enigma_progress')
                                 .update({
                                     solved: true,
@@ -5032,7 +5032,7 @@
 
                 try {
                     // Récupérer tous les joueurs avec leur email
-                    const { data: players } = await supabase
+                    const { data: players } = await supabaseClient
                         .from('players')
                         .select('id, pseudo, email, team_id, is_admin, is_test')
                         .eq('is_admin', false)
@@ -5054,7 +5054,7 @@
                         playersUpToDate = players.filter(p => p.email);
                     } else {
                         // Récupérer l'ID de l'énigme précédente
-                        const { data: prevEnigma } = await supabase
+                        const { data: prevEnigma } = await supabaseClient
                             .from('enigmas')
                             .select('id')
                             .eq('number', previousEnigmaNumber)
@@ -5066,7 +5066,7 @@
                         }
 
                         // Récupérer les progress de l'énigme précédente
-                        const { data: progressList } = await supabase
+                        const { data: progressList } = await supabaseClient
                             .from('enigma_progress')
                             .select('player_id, team_id, solved')
                             .eq('enigma_id', prevEnigma.id)
@@ -5188,19 +5188,19 @@
 
                 try {
                     // Export without passwords
-                    const { data: players } = await supabase
+                    const { data: players } = await supabaseClient
                         .from('players')
                         .select('id, pseudo, type, points, team_id, is_admin, is_test, created_at');
-                    const { data: teams } = await supabase
+                    const { data: teams } = await supabaseClient
                         .from('teams')
                         .select('id, name, code, points, leader, created_at');
-                    const { data: enigmas } = await supabase
+                    const { data: enigmas } = await supabaseClient
                         .from('enigmas')
                         .select('id, number, title, description, answer, location, qr_secret, validation_type, hint1, hint2, hint3, published, scheduled_at');
-                    const { data: progress } = await supabase
+                    const { data: progress } = await supabaseClient
                         .from('enigma_progress')
                         .select('*');
-                    const { data: submissions } = await supabase
+                    const { data: submissions } = await supabaseClient
                         .from('submissions')
                         .select('*');
 
@@ -5251,7 +5251,7 @@
                     console.log('Fun game complete received:', { playerId, enigmaId, totalTimeMs, deaths });
 
                     try {
-                        const { data: improved, error } = await supabase.rpc('submit_game_score', {
+                        const { data: improved, error } = await supabaseClient.rpc('submit_game_score', {
                             p_player_id: parseInt(playerId),
                             p_enigma_id: parseInt(enigmaId),
                             p_time_ms: totalTimeMs,
