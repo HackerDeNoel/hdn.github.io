@@ -1907,7 +1907,7 @@
                     }
 
                     // Load solved enigmas count
-                    let query = supabase
+                    let query = supabaseClient
                         .from('enigma_progress')
                         .select('id', { count: 'exact' })
                         .eq('solved', true);
@@ -1963,7 +1963,7 @@
                                 clearInterval(this.antiIaCountdownInterval);
                                 this.antiIaCountdownInterval = null;
                                 // Clear the block in database
-                                supabase
+                                supabaseClient
                                     .from('players')
                                     .update({ enigmas_blocked_until: null })
                                     .eq('id', this.currentUser.id)
@@ -2291,7 +2291,7 @@
                 }
 
                 // Get current team name
-                supabase
+                supabaseClient
                     .from('teams')
                     .select('name, leader')
                     .eq('id', this.currentUser.team_id)
@@ -2828,7 +2828,7 @@
                             }
 
                             // Check for pending submission - Fixed query
-                            let submissionQuery = supabase
+                            let submissionQuery = supabaseClient
                                 .from('submissions')
                                 .select('*')
                                 .eq('enigma_id', enigma.id)
@@ -2888,7 +2888,7 @@
                 try {
                     console.log('getProgress called for enigmaId:', enigmaId, 'user:', this.currentUser?.id, 'team:', this.currentUser?.team_id);
 
-                    let query = supabase
+                    let query = supabaseClient
                         .from('enigma_progress')
                         .select('*')
                         .eq('enigma_id', enigmaId);
@@ -3416,7 +3416,7 @@
 
                     if (enigma.validation_type === 'manual') {
                         // Check if already submitted
-                        let submissionQuery = supabase
+                        let submissionQuery = supabaseClient
                             .from('submissions')
                             .select('id')
                             .eq('enigma_id', enigmaId)
@@ -3709,7 +3709,7 @@
                                 const progress = await self.getProgress(self.currentScanEnigmaId);
 
                                 // Calculate POSITION points based on how many QR codes have been scanned for this enigma
-                                let countQuery = supabase
+                                let countQuery = supabaseClient
                                     .from('enigma_progress')
                                     .select('id', { count: 'exact' })
                                     .eq('enigma_id', self.currentScanEnigmaId)
@@ -4987,7 +4987,7 @@
 
                     if (accepted) {
                         // Get progress
-                        let query = supabase
+                        let query = supabaseClient
                             .from('enigma_progress')
                             .select('*')
                             .eq('enigma_id', submission.enigma_id);
