@@ -4919,15 +4919,19 @@
                 const entities = this.buildEntities(data);
                 this.calculatedBonuses = [];
 
+                const totalEnigmas = data.enigmas.length;
+
                 // Calculer les temps totaux pour chaque entité
+                // UNIQUEMENT ceux qui ont résolu TOUTES les énigmes
                 const entityTimes = entities.map(entity => {
                     const stats = this.getTeamDetailedStats(entity, data);
                     return {
                         ...entity,
                         totalTimeMinutes: stats.totalTimeMinutes,
-                        enigmasSolved: stats.enigmasSolved
+                        enigmasSolved: stats.enigmasSolved,
+                        totalAttempts: stats.totalAttempts
                     };
-                }).filter(e => e.enigmasSolved > 0);
+                }).filter(e => e.enigmasSolved === totalEnigmas);
 
                 // Trier par temps (plus rapide en premier)
                 entityTimes.sort((a, b) => a.totalTimeMinutes - b.totalTimeMinutes);
@@ -4936,7 +4940,7 @@
                 if (entityTimes.length > 0) {
                     this.calculatedBonuses.push({
                         type: '🚀 Speed Demon',
-                        description: 'Meilleur temps total de résolution',
+                        description: `Meilleur temps total (${totalEnigmas} énigmes complétées)`,
                         points: 5,
                         entity: entityTimes[0],
                         reason: `Temps total: ${this.formatMinutes(entityTimes[0].totalTimeMinutes)}`
@@ -4947,29 +4951,39 @@
                 if (entityTimes.length > 1) {
                     this.calculatedBonuses.push({
                         type: '⚡ Flash',
-                        description: '2ème meilleur temps de résolution',
+                        description: `2ème meilleur temps (${totalEnigmas} énigmes complétées)`,
                         points: 3,
                         entity: entityTimes[1],
                         reason: `Temps total: ${this.formatMinutes(entityTimes[1].totalTimeMinutes)}`
                     });
                 }
 
-                // Bonus Sniper (+5 pts) - Moins de tentatives (mauvaises réponses)
-                const entityAttempts = entities.map(entity => {
-                    const stats = this.getTeamDetailedStats(entity, data);
-                    return { ...entity, attempts: stats.totalAttempts, enigmasSolved: stats.enigmasSolved };
-                }).filter(e => e.enigmasSolved > 0);
-
-                entityAttempts.sort((a, b) => a.attempts - b.attempts);
+                // Bonus Sniper (+5 pts) - Moins de mauvaises réponses
+                // UNIQUEMENT parmi ceux qui ont terminé toutes les énigmes
+                const entityAttempts = [...entityTimes].sort((a, b) => a.totalAttempts - b.totalAttempts);
 
                 if (entityAttempts.length > 0) {
                     this.calculatedBonuses.push({
                         type: '🎯 Sniper',
-                        description: 'Moins de mauvaises réponses (plus précis)',
+                        description: `Moins de mauvaises réponses (${totalEnigmas} énigmes complétées)`,
                         points: 5,
                         entity: entityAttempts[0],
-                        reason: `${entityAttempts[0].attempts} mauvaises réponses seulement`
+                        reason: `${entityAttempts[0].totalAttempts} mauvaises réponses seulement`
                     });
+                }
+
+                // Message si personne n'a tout terminé
+                if (entityTimes.length === 0) {
+                    container.innerHTML = `
+                        <div style="padding: 20px; background: rgba(255,165,0,0.1); border: 1px solid orange; border-radius: 10px;">
+                            <p style="color: orange; margin: 0;">
+                                ⚠️ Aucun participant n'a encore terminé les ${totalEnigmas} énigmes.<br>
+                                <span style="color: #888; font-size: 13px;">Les bonus seront calculés uniquement pour ceux qui ont complété toutes les énigmes.</span>
+                            </p>
+                        </div>
+                    `;
+                    document.getElementById('applyBonusBtn').disabled = true;
+                    return;
                 }
 
                 // Afficher les bonus
