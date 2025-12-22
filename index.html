@@ -4289,18 +4289,6 @@
                         supabaseClient.from('submissions').select('id, enigma_id, player_id, team_id, status, created_at')
                     ]);
 
-                    // Debug log
-                    console.log('Stats data loaded:', {
-                        players: playersRes.data?.length,
-                        teams: teamsRes.data?.length,
-                        enigmas: enigmasRes.data?.length,
-                        progress: progressRes.data?.length,
-                        submissions: submissionsRes.data?.length
-                    });
-
-                    // Debug: voir les progress avec team_id
-                    console.log('Progress with team_id:', progressRes.data?.filter(p => p.team_id));
-
                     this.statsData = {
                         players: playersRes.data?.filter(p => !p.is_admin && !p.pseudo.toLowerCase().includes('test')) || [],
                         teams: teamsRes.data || [],
@@ -4418,14 +4406,6 @@
                         entity.points = Math.max(entity.points, team.points || 0, player.points || 0);
                     }
                 }
-
-                // Debug log
-                console.log('Entities built:', Array.from(entities.values()).map(e => ({
-                    name: e.name,
-                    type: e.type,
-                    points: e.points,
-                    playerIds: e.playerIds
-                })));
 
                 return Array.from(entities.values()).sort((a, b) => b.points - a.points);
             },
@@ -4576,17 +4556,20 @@
 
                 for (const entity of entities) {
                     result[entity.key] = data.enigmas.map(enigma => {
-                        // Compter les soumissions pour cette entité sur cette énigme
+                        // Récupérer wrong_attempts depuis enigma_progress
                         if (entity.team_id) {
-                            // Pour les équipes, chercher par team_id
-                            return data.submissions.filter(s =>
-                                s.enigma_id === enigma.id && s.team_id === entity.team_id
-                            ).length;
+                            const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
+                            return prog?.wrong_attempts || 0;
                         } else {
                             // Pour les solos, chercher par player_id
-                            return data.submissions.filter(s =>
-                                s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
-                            ).length;
+                            let totalAttempts = 0;
+                            for (const playerId of entity.playerIds) {
+                                const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                                if (prog?.wrong_attempts) {
+                                    totalAttempts = Math.max(totalAttempts, prog.wrong_attempts);
+                                }
+                            }
+                            return totalAttempts;
                         }
                     });
                 }
@@ -4680,16 +4663,18 @@
                 let totalAttempts = 0;
 
                 for (const entity of entities) {
-                    // Tentatives - chercher par team_id ou player_id
+                    // Tentatives - utiliser wrong_attempts depuis enigma_progress
                     let attempts = 0;
                     if (entity.team_id) {
-                        attempts = data.submissions.filter(s =>
-                            s.enigma_id === enigma.id && s.team_id === entity.team_id
-                        ).length;
+                        const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
+                        attempts = prog?.wrong_attempts || 0;
                     } else {
-                        attempts = data.submissions.filter(s =>
-                            s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
-                        ).length;
+                        for (const playerId of entity.playerIds) {
+                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (prog?.wrong_attempts) {
+                                attempts = Math.max(attempts, prog.wrong_attempts);
+                            }
+                        }
                     }
                     totalAttempts += attempts;
 
@@ -4840,16 +4825,23 @@
                 const enigmaDetails = [];
 
                 for (const enigma of data.enigmas) {
-                    // Tentatives - chercher par team_id ou player_id
+                    // Tentatives - utiliser wrong_attempts depuis enigma_progress
                     let attempts = 0;
+                    let prog = null;
+
                     if (entity.team_id) {
-                        attempts = data.submissions.filter(s =>
-                            s.enigma_id === enigma.id && s.team_id === entity.team_id
-                        ).length;
+                        prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
+                        attempts = prog?.wrong_attempts || 0;
                     } else {
-                        attempts = data.submissions.filter(s =>
-                            s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
-                        ).length;
+                        for (const playerId of entity.playerIds) {
+                            const playerProg = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (playerProg) {
+                                prog = playerProg;
+                                if (playerProg.wrong_attempts) {
+                                    attempts = Math.max(attempts, playerProg.wrong_attempts);
+                                }
+                            }
+                        }
                     }
                     totalAttempts += attempts;
 
@@ -4860,7 +4852,6 @@
 
                     if (entity.team_id) {
                         // Pour les équipes, chercher par team_id
-                        const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
                         if (prog?.solved_at && prog?.started_at) {
                             const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                             if (t > 0) time = t;
@@ -4873,16 +4864,16 @@
                     } else {
                         // Pour les solos, chercher par player_id
                         for (const playerId of entity.playerIds) {
-                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
-                            if (prog?.solved_at && prog?.started_at) {
-                                const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
+                            const playerProg = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (playerProg?.solved_at && playerProg?.started_at) {
+                                const t = (new Date(playerProg.solved_at) - new Date(playerProg.started_at)) / 60000;
                                 if (t > 0 && (time === null || t < time)) {
                                     time = t;
                                 }
                                 solved = true;
-                                if (prog.qr_scanned) qr = true;
-                                status = prog.qr_scanned ? '✅' : '🔍';
-                            } else if (prog?.started_at && status === '❌') {
+                                if (playerProg.qr_scanned) qr = true;
+                                status = playerProg.qr_scanned ? '✅' : '🔍';
+                            } else if (playerProg?.started_at && status === '❌') {
                                 status = '⏳';
                             }
                         }
@@ -4963,13 +4954,10 @@
                     });
                 }
 
-                // Bonus Sniper (+5 pts) - Moins de tentatives
+                // Bonus Sniper (+5 pts) - Moins de tentatives (mauvaises réponses)
                 const entityAttempts = entities.map(entity => {
-                    const attempts = data.submissions.filter(s =>
-                        entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id
-                    ).length;
                     const stats = this.getTeamDetailedStats(entity, data);
-                    return { ...entity, attempts, enigmasSolved: stats.enigmasSolved };
+                    return { ...entity, attempts: stats.totalAttempts, enigmasSolved: stats.enigmasSolved };
                 }).filter(e => e.enigmasSolved > 0);
 
                 entityAttempts.sort((a, b) => a.attempts - b.attempts);
@@ -4977,10 +4965,10 @@
                 if (entityAttempts.length > 0) {
                     this.calculatedBonuses.push({
                         type: '🎯 Sniper',
-                        description: 'Moins de tentatives (plus précis)',
+                        description: 'Moins de mauvaises réponses (plus précis)',
                         points: 5,
                         entity: entityAttempts[0],
-                        reason: `${entityAttempts[0].attempts} tentatives seulement`
+                        reason: `${entityAttempts[0].attempts} mauvaises réponses seulement`
                     });
                 }
 
