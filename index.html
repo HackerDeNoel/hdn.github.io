@@ -4262,6 +4262,9 @@
             calculatedBonuses: [], // Bonus calculés
 
             async loadStats() {
+                // Toujours rafraîchir les données
+                this.statsData = null;
+
                 // Afficher section bonus admin si admin
                 const bonusSection = document.getElementById('adminBonusSection');
                 if (bonusSection && this.currentUser?.is_admin) {
@@ -4280,11 +4283,20 @@
                     // Récupérer toutes les données nécessaires
                     const [playersRes, teamsRes, enigmasRes, progressRes, submissionsRes] = await Promise.all([
                         supabaseClient.from('players').select('id, pseudo, email, team_id, points, is_admin'),
-                        supabaseClient.from('teams').select('id, name'),
+                        supabaseClient.from('teams').select('id, name, points'),
                         supabaseClient.from('enigmas').select('id, number, title, scheduled_at').eq('published', true).order('number'),
                         supabaseClient.from('enigma_progress').select('player_id, enigma_id, solved_at, qr_scanned, wrong_attempts, started_at'),
                         supabaseClient.from('submissions').select('id, enigma_id, player_id, team_id, status, created_at')
                     ]);
+
+                    // Debug log
+                    console.log('Stats data loaded:', {
+                        players: playersRes.data?.length,
+                        teams: teamsRes.data?.length,
+                        enigmas: enigmasRes.data?.length,
+                        progress: progressRes.data?.length,
+                        submissions: submissionsRes.data?.length
+                    });
 
                     this.statsData = {
                         players: playersRes.data?.filter(p => !p.is_admin && !p.pseudo.toLowerCase().includes('test')) || [],
@@ -4385,7 +4397,8 @@
                             name: entityName,
                             type: team ? 'Équipe' : 'Solo',
                             team_id: team?.id || null,
-                            points: 0,
+                            // Pour les équipes, utiliser les points de la team si disponibles
+                            points: team?.points || 0,
                             members: [],
                             playerIds: []
                         });
@@ -4394,8 +4407,22 @@
                     const entity = entities.get(entityKey);
                     entity.members.push(player.pseudo);
                     entity.playerIds.push(player.id);
-                    entity.points = Math.max(entity.points, player.points || 0);
+                    // Pour les solos ou si la team n'a pas de points, utiliser le max des joueurs
+                    if (!team) {
+                        entity.points = Math.max(entity.points, player.points || 0);
+                    } else {
+                        // Pour les équipes, prendre le max entre points team et points joueur
+                        entity.points = Math.max(entity.points, team.points || 0, player.points || 0);
+                    }
                 }
+
+                // Debug log
+                console.log('Entities built:', Array.from(entities.values()).map(e => ({
+                    name: e.name,
+                    type: e.type,
+                    points: e.points,
+                    playerIds: e.playerIds
+                })));
 
                 return Array.from(entities.values()).sort((a, b) => b.points - a.points);
             },
@@ -4518,7 +4545,22 @@
                         for (const playerId of entity.playerIds) {
                             const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
                             if (prog?.solved_at && enigma.scheduled_at) {
-                                const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000; // en minutes
+                                const solvedDate = new Date(prog.solved_at);
+                                const scheduledDate = new Date(enigma.scheduled_at);
+                                const time = (solvedDate - scheduledDate) / 60000; // en minutes
+
+                                // Debug pour la première entité
+                                if (entity === entities[0] && enigma === data.enigmas[0]) {
+                                    console.log('Resolution time calc:', {
+                                        entity: entity.name,
+                                        enigma: enigma.number,
+                                        playerId,
+                                        solved_at: prog.solved_at,
+                                        scheduled_at: enigma.scheduled_at,
+                                        time_minutes: time
+                                    });
+                                }
+
                                 if (time > 0 && (bestTime === null || time < bestTime)) {
                                     bestTime = time;
                                 }
@@ -4527,6 +4569,12 @@
                         return bestTime;
                     });
                 }
+
+                // Debug log
+                console.log('Resolution times calculated:', Object.keys(result).map(k => ({
+                    entity: k,
+                    times: result[k]
+                })));
 
                 return result;
             },
