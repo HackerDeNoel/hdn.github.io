@@ -4548,16 +4548,16 @@
                         // Pour les équipes, chercher par team_id
                         if (entity.team_id) {
                             const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
-                            if (prog?.solved_at && enigma.scheduled_at) {
-                                const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                            if (prog?.solved_at && prog?.started_at) {
+                                const time = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                                 if (time > 0) bestTime = time;
                             }
                         } else {
                             // Pour les solos, chercher par player_id
                             for (const playerId of entity.playerIds) {
                                 const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
-                                if (prog?.solved_at && enigma.scheduled_at) {
-                                    const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                                if (prog?.solved_at && prog?.started_at) {
+                                    const time = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                                     if (time > 0 && (bestTime === null || time < bestTime)) {
                                         bestTime = time;
                                     }
@@ -4700,8 +4700,8 @@
                     if (entity.team_id) {
                         // Pour les équipes, chercher par team_id
                         const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
-                        if (prog?.solved_at && enigma.scheduled_at) {
-                            const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                        if (prog?.solved_at && prog?.started_at) {
+                            const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                             if (t > 0) time = t;
                             status = prog.qr_scanned ? '✅' : '🔍';
                         } else if (prog?.started_at) {
@@ -4711,8 +4711,8 @@
                         // Pour les solos, chercher par player_id
                         for (const playerId of entity.playerIds) {
                             const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
-                            if (prog?.solved_at && enigma.scheduled_at) {
-                                const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                            if (prog?.solved_at && prog?.started_at) {
+                                const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                                 if (t > 0 && (time === null || t < time)) {
                                     time = t;
                                 }
@@ -4861,8 +4861,8 @@
                     if (entity.team_id) {
                         // Pour les équipes, chercher par team_id
                         const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
-                        if (prog?.solved_at && enigma.scheduled_at) {
-                            const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                        if (prog?.solved_at && prog?.started_at) {
+                            const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                             if (t > 0) time = t;
                             solved = true;
                             if (prog.qr_scanned) qr = true;
@@ -4874,8 +4874,8 @@
                         // Pour les solos, chercher par player_id
                         for (const playerId of entity.playerIds) {
                             const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
-                            if (prog?.solved_at && enigma.scheduled_at) {
-                                const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                            if (prog?.solved_at && prog?.started_at) {
+                                const t = (new Date(prog.solved_at) - new Date(prog.started_at)) / 60000;
                                 if (t > 0 && (time === null || t < time)) {
                                     time = t;
                                 }
