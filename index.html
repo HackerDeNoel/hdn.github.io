@@ -13,6 +13,8 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- QRCode.js for generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Chart.js for statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -882,6 +884,7 @@
             <button onclick="hdnApp.showSection('home')">🏠 Accueil</button>
             <button id="enigmaNavBtn" onclick="hdnApp.showSection('enigmes')">💡 Énigmes</button>
             <button onclick="hdnApp.showSection('ranking')">🏆 Classement</button>
+            <button onclick="hdnApp.showSection('stats')">📊 Stats</button>
             <button class="hidden" id="minigameNavBtn" onclick="hdnApp.showSection('minigame')">🎮 Mini-jeu</button>
             <button onclick="hdnApp.showSection('rules')">📋 Règles</button>
             <button class="hidden" id="adminNavBtn" onclick="hdnApp.showSection('admin')">⚙️ Admin</button>
@@ -1236,6 +1239,48 @@
                     <strong>📅 Dates de l'événement :</strong><br>
                     • Début : 25 novembre 2025<br>
                     • Fin : 08 décembre 2025
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS SECTION -->
+        <div class="section" id="stats-section">
+            <div class="card">
+                <h2>📊 Statistiques</h2>
+                <p style="color: #888; margin-bottom: 20px;">Analyse détaillée de la compétition HDN Christmas 2025</p>
+
+                <!-- Sélecteur de vue -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="hdnApp.loadStatsOverview()" id="statsOverviewBtn">📈 Vue
+                        d'ensemble</button>
+                    <button class="btn btn-secondary" onclick="hdnApp.loadStatsEnigmas()" id="statsEnigmasBtn">🧩 Par
+                        énigme</button>
+                    <button class="btn btn-secondary" onclick="hdnApp.loadStatsTeams()" id="statsTeamsBtn">👥 Par
+                        équipe</button>
+                </div>
+
+                <div id="statsContent">
+                    <div class="loading">Chargement des statistiques...</div>
+                </div>
+            </div>
+
+            <!-- Section Bonus Admin (visible uniquement pour les admins) -->
+            <div class="card hidden" id="adminBonusSection">
+                <h2>🎁 Attribution des Bonus</h2>
+                <p style="color: #888; margin-bottom: 20px;">Bonus calculés automatiquement - À valider avant
+                    attribution</p>
+
+                <div id="bonusCalculation">
+                    <div class="loading">Calcul des bonus...</div>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
+                    <button class="btn btn-success" onclick="hdnApp.applyBonuses()" id="applyBonusBtn" disabled>
+                        ✅ Appliquer tous les bonus
+                    </button>
+                    <p style="color: #888; font-size: 12px; margin-top: 10px;">
+                        ⚠️ Cette action ajoutera les points bonus aux équipes/joueurs concernés
+                    </p>
                 </div>
             </div>
         </div>
@@ -2412,6 +2457,8 @@
                     this.loadEnigmes();
                 } else if (sectionName === 'ranking') {
                     this.loadClassement();
+                } else if (sectionName === 'stats') {
+                    this.loadStats();
                 } else if (sectionName === 'minigame') {
                     this.loadGameLeaderboard();
                 } else if (sectionName === 'admin') {
@@ -4205,6 +4252,742 @@
                 } catch (error) {
                     console.error('Error loading ranking:', error);
                     container.innerHTML = '<p style="color: #ff4444;">Erreur lors du chargement du classement.</p>';
+                }
+            },
+
+            // ========== STATISTIQUES ==========
+
+            statsCharts: {}, // Stocker les instances de graphiques
+            statsData: null, // Cache des données
+            calculatedBonuses: [], // Bonus calculés
+
+            async loadStats() {
+                // Afficher section bonus admin si admin
+                const bonusSection = document.getElementById('adminBonusSection');
+                if (bonusSection && this.currentUser?.is_admin) {
+                    bonusSection.classList.remove('hidden');
+                    this.calculateBonuses();
+                }
+
+                // Charger la vue d'ensemble par défaut
+                this.loadStatsOverview();
+            },
+
+            async fetchStatsData() {
+                if (this.statsData) return this.statsData;
+
+                try {
+                    // Récupérer toutes les données nécessaires
+                    const [playersRes, teamsRes, enigmasRes, progressRes, submissionsRes] = await Promise.all([
+                        supabaseClient.from('players').select('id, pseudo, email, team_id, points, is_admin'),
+                        supabaseClient.from('teams').select('id, name'),
+                        supabaseClient.from('enigmas').select('id, number, title, scheduled_at').eq('published', true).order('number'),
+                        supabaseClient.from('enigma_progress').select('player_id, enigma_id, solved_at, qr_scanned, wrong_attempts, started_at'),
+                        supabaseClient.from('submissions').select('id, enigma_id, player_id, team_id, status, created_at')
+                    ]);
+
+                    this.statsData = {
+                        players: playersRes.data?.filter(p => !p.is_admin && !p.pseudo.toLowerCase().includes('test')) || [],
+                        teams: teamsRes.data || [],
+                        enigmas: enigmasRes.data || [],
+                        progress: progressRes.data || [],
+                        submissions: submissionsRes.data || []
+                    };
+
+                    return this.statsData;
+                } catch (error) {
+                    console.error('Error fetching stats data:', error);
+                    return null;
+                }
+            },
+
+            setActiveStatsBtn(btnId) {
+                ['statsOverviewBtn', 'statsEnigmasBtn', 'statsTeamsBtn'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.className = id === btnId ? 'btn btn-primary' : 'btn btn-secondary';
+                    }
+                });
+            },
+
+            async loadStatsOverview() {
+                this.setActiveStatsBtn('statsOverviewBtn');
+                const container = document.getElementById('statsContent');
+                container.innerHTML = '<div class="loading">Chargement...</div>';
+
+                const data = await this.fetchStatsData();
+                if (!data) {
+                    container.innerHTML = '<p style="color: #ff4444;">Erreur de chargement</p>';
+                    return;
+                }
+
+                // Construire les entités (équipes + solos)
+                const entities = this.buildEntities(data);
+
+                // Stats globales
+                const totalParticipants = entities.length;
+                const totalEnigmas = data.enigmas.length;
+                const totalSubmissions = data.submissions.length;
+                const avgAttempts = totalEnigmas > 0 ? (totalSubmissions / totalParticipants / totalEnigmas).toFixed(1) : 0;
+
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #343973, #4a5193); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #81FE0E;">${totalParticipants}</div>
+                            <div style="color: #aaa; font-size: 14px;">Participants</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #343973, #4a5193); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #81FE0E;">${totalEnigmas}</div>
+                            <div style="color: #aaa; font-size: 14px;">Énigmes</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #343973, #4a5193); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #81FE0E;">${totalSubmissions}</div>
+                            <div style="color: #aaa; font-size: 14px;">Soumissions</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #343973, #4a5193); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #81FE0E;">${avgAttempts}</div>
+                            <div style="color: #aaa; font-size: 14px;">Moy. essais/énigme</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px;">
+                            <h3 style="margin-bottom: 15px; color: #81FE0E;">📈 Temps de résolution par énigme</h3>
+                            <canvas id="chartResolutionTime" height="250"></canvas>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px;">
+                            <h3 style="margin-bottom: 15px; color: #81FE0E;">🎯 Tentatives par énigme</h3>
+                            <canvas id="chartAttempts" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px;">
+                        <h3 style="margin-bottom: 15px; color: #81FE0E;">🏆 Classement par points</h3>
+                        <canvas id="chartRanking" height="150"></canvas>
+                    </div>
+                `;
+
+                // Générer les graphiques
+                this.renderOverviewCharts(data, entities);
+            },
+
+            buildEntities(data) {
+                const entities = new Map();
+
+                for (const player of data.players) {
+                    const team = player.team_id ? data.teams.find(t => t.id === player.team_id) : null;
+                    const entityKey = team ? `team_${team.id}` : `solo_${player.id}`;
+                    const entityName = team ? team.name : player.pseudo;
+
+                    if (!entities.has(entityKey)) {
+                        entities.set(entityKey, {
+                            key: entityKey,
+                            name: entityName,
+                            type: team ? 'Équipe' : 'Solo',
+                            team_id: team?.id || null,
+                            points: 0,
+                            members: [],
+                            playerIds: []
+                        });
+                    }
+
+                    const entity = entities.get(entityKey);
+                    entity.members.push(player.pseudo);
+                    entity.playerIds.push(player.id);
+                    entity.points = Math.max(entity.points, player.points || 0);
+                }
+
+                return Array.from(entities.values()).sort((a, b) => b.points - a.points);
+            },
+
+            renderOverviewCharts(data, entities) {
+                // Détruire les anciens graphiques
+                Object.values(this.statsCharts).forEach(chart => chart?.destroy());
+                this.statsCharts = {};
+
+                const colors = ['#81FE0E', '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534', '#14532d'];
+                const entityColors = entities.map((_, i) => colors[i % colors.length]);
+
+                // 1. Temps de résolution par énigme
+                const resolutionData = this.calculateResolutionTimes(data, entities);
+                const ctxResolution = document.getElementById('chartResolutionTime')?.getContext('2d');
+                if (ctxResolution) {
+                    this.statsCharts.resolution = new Chart(ctxResolution, {
+                        type: 'bar',
+                        data: {
+                            labels: data.enigmas.map(e => `#${e.number}`),
+                            datasets: entities.slice(0, 5).map((entity, i) => ({
+                                label: entity.name,
+                                data: resolutionData[entity.key] || [],
+                                backgroundColor: entityColors[i] + '99',
+                                borderColor: entityColors[i],
+                                borderWidth: 1
+                            }))
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { labels: { color: '#fff' } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => `${ctx.dataset.label}: ${this.formatMinutes(ctx.raw)}`
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                                y: {
+                                    ticks: {
+                                        color: '#aaa',
+                                        callback: (val) => this.formatMinutes(val)
+                                    },
+                                    grid: { color: '#333' },
+                                    title: { display: true, text: 'Temps', color: '#aaa' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 2. Tentatives par énigme
+                const attemptsData = this.calculateAttempts(data, entities);
+                const ctxAttempts = document.getElementById('chartAttempts')?.getContext('2d');
+                if (ctxAttempts) {
+                    this.statsCharts.attempts = new Chart(ctxAttempts, {
+                        type: 'bar',
+                        data: {
+                            labels: data.enigmas.map(e => `#${e.number}`),
+                            datasets: entities.slice(0, 5).map((entity, i) => ({
+                                label: entity.name,
+                                data: attemptsData[entity.key] || [],
+                                backgroundColor: entityColors[i] + '99',
+                                borderColor: entityColors[i],
+                                borderWidth: 1
+                            }))
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { labels: { color: '#fff' } } },
+                            scales: {
+                                x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                                y: {
+                                    ticks: { color: '#aaa' },
+                                    grid: { color: '#333' },
+                                    title: { display: true, text: 'Tentatives', color: '#aaa' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Classement par points
+                const ctxRanking = document.getElementById('chartRanking')?.getContext('2d');
+                if (ctxRanking) {
+                    this.statsCharts.ranking = new Chart(ctxRanking, {
+                        type: 'bar',
+                        data: {
+                            labels: entities.map(e => e.name),
+                            datasets: [{
+                                label: 'Points',
+                                data: entities.map(e => e.points),
+                                backgroundColor: entities.map((_, i) => i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#81FE0E99'),
+                                borderColor: entities.map((_, i) => i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#81FE0E'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                                y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+                            }
+                        }
+                    });
+                }
+            },
+
+            calculateResolutionTimes(data, entities) {
+                const result = {};
+
+                for (const entity of entities) {
+                    result[entity.key] = data.enigmas.map(enigma => {
+                        // Trouver le temps le plus rapide parmi les membres
+                        let bestTime = null;
+                        for (const playerId of entity.playerIds) {
+                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (prog?.solved_at && enigma.scheduled_at) {
+                                const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000; // en minutes
+                                if (time > 0 && (bestTime === null || time < bestTime)) {
+                                    bestTime = time;
+                                }
+                            }
+                        }
+                        return bestTime;
+                    });
+                }
+
+                return result;
+            },
+
+            calculateAttempts(data, entities) {
+                const result = {};
+
+                for (const entity of entities) {
+                    result[entity.key] = data.enigmas.map(enigma => {
+                        // Compter les soumissions pour cette entité sur cette énigme
+                        return data.submissions.filter(s =>
+                            s.enigma_id === enigma.id &&
+                            (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
+                        ).length;
+                    });
+                }
+
+                return result;
+            },
+
+            formatMinutes(minutes) {
+                if (!minutes || minutes <= 0) return '-';
+                const h = Math.floor(minutes / 60);
+                const m = Math.round(minutes % 60);
+                return h > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${m}m`;
+            },
+
+            async loadStatsEnigmas() {
+                this.setActiveStatsBtn('statsEnigmasBtn');
+                const container = document.getElementById('statsContent');
+                container.innerHTML = '<div class="loading">Chargement...</div>';
+
+                const data = await this.fetchStatsData();
+                if (!data) {
+                    container.innerHTML = '<p style="color: #ff4444;">Erreur de chargement</p>';
+                    return;
+                }
+
+                const entities = this.buildEntities(data);
+
+                let html = '<div style="overflow-x: auto;">';
+
+                for (const enigma of data.enigmas) {
+                    const enigmaStats = this.getEnigmaStats(enigma, data, entities);
+
+                    html += `
+                        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <h3 style="color: #81FE0E; margin-bottom: 15px;">
+                                🧩 Énigme #${enigma.number} - ${enigma.title}
+                            </h3>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #81FE0E;">${enigmaStats.solved}</div>
+                                    <div style="color: #aaa; font-size: 12px;">Résolue par</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #81FE0E;">${enigmaStats.totalAttempts}</div>
+                                    <div style="color: #aaa; font-size: 12px;">Tentatives</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #81FE0E;">${enigmaStats.avgTime}</div>
+                                    <div style="color: #aaa; font-size: 12px;">Temps moyen</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #ffd700;">${enigmaStats.bestTime}</div>
+                                    <div style="color: #aaa; font-size: 12px;">Record</div>
+                                </div>
+                            </div>
+                            
+                            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                <thead>
+                                    <tr style="background: #343973;">
+                                        <th style="padding: 10px; text-align: left; color: #81FE0E;">Participant</th>
+                                        <th style="padding: 10px; text-align: center; color: #81FE0E;">Tentatives</th>
+                                        <th style="padding: 10px; text-align: center; color: #81FE0E;">Temps</th>
+                                        <th style="padding: 10px; text-align: center; color: #81FE0E;">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${enigmaStats.details.map(d => `
+                                        <tr style="border-bottom: 1px solid #333;">
+                                            <td style="padding: 10px;">${d.name} <span style="color: #666; font-size: 11px;">${d.type}</span></td>
+                                            <td style="padding: 10px; text-align: center;">${d.attempts}</td>
+                                            <td style="padding: 10px; text-align: center;">${d.time}</td>
+                                            <td style="padding: 10px; text-align: center;">${d.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+            },
+
+            getEnigmaStats(enigma, data, entities) {
+                const details = [];
+                let totalTime = 0;
+                let solvedCount = 0;
+                let bestTime = Infinity;
+                let totalAttempts = 0;
+
+                for (const entity of entities) {
+                    // Tentatives
+                    const attempts = data.submissions.filter(s =>
+                        s.enigma_id === enigma.id &&
+                        (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
+                    ).length;
+                    totalAttempts += attempts;
+
+                    // Temps de résolution
+                    let time = null;
+                    let status = '❌';
+                    for (const playerId of entity.playerIds) {
+                        const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                        if (prog?.solved_at && enigma.scheduled_at) {
+                            const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                            if (t > 0 && (time === null || t < time)) {
+                                time = t;
+                            }
+                            status = prog.qr_scanned ? '✅' : '🔍';
+                        } else if (prog?.started_at) {
+                            status = '⏳';
+                        }
+                    }
+
+                    if (time !== null) {
+                        totalTime += time;
+                        solvedCount++;
+                        if (time < bestTime) bestTime = time;
+                    }
+
+                    details.push({
+                        name: entity.name,
+                        type: entity.type === 'Équipe' ? '👥' : '👤',
+                        attempts: attempts || 0,
+                        time: time ? this.formatMinutes(time) : '-',
+                        status: status
+                    });
+                }
+
+                // Trier par temps (les plus rapides en premier)
+                details.sort((a, b) => {
+                    if (a.time === '-') return 1;
+                    if (b.time === '-') return -1;
+                    return 0;
+                });
+
+                return {
+                    solved: solvedCount,
+                    totalAttempts: totalAttempts,
+                    avgTime: solvedCount > 0 ? this.formatMinutes(totalTime / solvedCount) : '-',
+                    bestTime: bestTime < Infinity ? this.formatMinutes(bestTime) : '-',
+                    details: details
+                };
+            },
+
+            async loadStatsTeams() {
+                this.setActiveStatsBtn('statsTeamsBtn');
+                const container = document.getElementById('statsContent');
+                container.innerHTML = '<div class="loading">Chargement...</div>';
+
+                const data = await this.fetchStatsData();
+                if (!data) {
+                    container.innerHTML = '<p style="color: #ff4444;">Erreur de chargement</p>';
+                    return;
+                }
+
+                const entities = this.buildEntities(data);
+
+                let html = '';
+
+                for (const entity of entities) {
+                    const teamStats = this.getTeamDetailedStats(entity, data);
+
+                    html += `
+                        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="color: #81FE0E; margin: 0;">
+                                    ${entity.type === 'Équipe' ? '👥' : '👤'} ${entity.name}
+                                </h3>
+                                <span style="background: #81FE0E; color: #000; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                                    ${entity.points} pts
+                                </span>
+                            </div>
+                            
+                            ${entity.type === 'Équipe' ? `<p style="color: #888; margin-bottom: 15px;">Membres : ${entity.members.join(', ')}</p>` : ''}
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 20px; font-weight: bold; color: #81FE0E;">${teamStats.enigmasSolved}</div>
+                                    <div style="color: #aaa; font-size: 11px;">Énigmes</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 20px; font-weight: bold; color: #81FE0E;">${teamStats.qrFound}</div>
+                                    <div style="color: #aaa; font-size: 11px;">QR trouvés</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 20px; font-weight: bold; color: #81FE0E;">${teamStats.totalAttempts}</div>
+                                    <div style="color: #aaa; font-size: 11px;">Tentatives</div>
+                                </div>
+                                <div style="background: #343973; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 20px; font-weight: bold; color: #81FE0E;">${teamStats.totalTime}</div>
+                                    <div style="color: #aaa; font-size: 11px;">Temps total</div>
+                                </div>
+                            </div>
+                            
+                            <h4 style="color: #aaa; margin-bottom: 10px; font-size: 14px;">Détail par énigme</h4>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: #343973;">
+                                        <th style="padding: 8px; text-align: left; color: #81FE0E;">Énigme</th>
+                                        <th style="padding: 8px; text-align: center; color: #81FE0E;">Essais</th>
+                                        <th style="padding: 8px; text-align: center; color: #81FE0E;">Temps</th>
+                                        <th style="padding: 8px; text-align: center; color: #81FE0E;">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${teamStats.enigmaDetails.map(e => `
+                                        <tr style="border-bottom: 1px solid #333;">
+                                            <td style="padding: 8px;">#${e.number} ${e.title}</td>
+                                            <td style="padding: 8px; text-align: center;">${e.attempts}</td>
+                                            <td style="padding: 8px; text-align: center;">${e.time}</td>
+                                            <td style="padding: 8px; text-align: center;">${e.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            },
+
+            getTeamDetailedStats(entity, data) {
+                let enigmasSolved = 0;
+                let qrFound = 0;
+                let totalAttempts = 0;
+                let totalTimeMinutes = 0;
+                const enigmaDetails = [];
+
+                for (const enigma of data.enigmas) {
+                    const attempts = data.submissions.filter(s =>
+                        s.enigma_id === enigma.id &&
+                        (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
+                    ).length;
+                    totalAttempts += attempts;
+
+                    let time = null;
+                    let status = '❌';
+                    let solved = false;
+                    let qr = false;
+
+                    for (const playerId of entity.playerIds) {
+                        const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                        if (prog?.solved_at && enigma.scheduled_at) {
+                            const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                            if (t > 0 && (time === null || t < time)) {
+                                time = t;
+                            }
+                            solved = true;
+                            if (prog.qr_scanned) qr = true;
+                            status = prog.qr_scanned ? '✅' : '🔍';
+                        } else if (prog?.started_at && status === '❌') {
+                            status = '⏳';
+                        }
+                    }
+
+                    if (solved) enigmasSolved++;
+                    if (qr) qrFound++;
+                    if (time) totalTimeMinutes += time;
+
+                    enigmaDetails.push({
+                        number: enigma.number,
+                        title: enigma.title,
+                        attempts: attempts,
+                        time: time ? this.formatMinutes(time) : '-',
+                        status: status
+                    });
+                }
+
+                return {
+                    enigmasSolved,
+                    qrFound,
+                    totalAttempts,
+                    totalTime: this.formatMinutes(totalTimeMinutes),
+                    totalTimeMinutes,
+                    enigmaDetails
+                };
+            },
+
+            // ========== BONUS ADMIN ==========
+
+            async calculateBonuses() {
+                const container = document.getElementById('bonusCalculation');
+                if (!container) return;
+
+                container.innerHTML = '<div class="loading">Calcul des bonus...</div>';
+
+                const data = await this.fetchStatsData();
+                if (!data) {
+                    container.innerHTML = '<p style="color: #ff4444;">Erreur de chargement</p>';
+                    return;
+                }
+
+                const entities = this.buildEntities(data);
+                this.calculatedBonuses = [];
+
+                // Calculer les temps totaux pour chaque entité
+                const entityTimes = entities.map(entity => {
+                    const stats = this.getTeamDetailedStats(entity, data);
+                    return {
+                        ...entity,
+                        totalTimeMinutes: stats.totalTimeMinutes,
+                        enigmasSolved: stats.enigmasSolved
+                    };
+                }).filter(e => e.enigmasSolved > 0);
+
+                // Trier par temps (plus rapide en premier)
+                entityTimes.sort((a, b) => a.totalTimeMinutes - b.totalTimeMinutes);
+
+                // Bonus Speed Demon (+5 pts) - Meilleur temps total
+                if (entityTimes.length > 0) {
+                    this.calculatedBonuses.push({
+                        type: '🚀 Speed Demon',
+                        description: 'Meilleur temps total de résolution',
+                        points: 5,
+                        entity: entityTimes[0],
+                        reason: `Temps total: ${this.formatMinutes(entityTimes[0].totalTimeMinutes)}`
+                    });
+                }
+
+                // Bonus Flash (+3 pts) - 2ème meilleur temps
+                if (entityTimes.length > 1) {
+                    this.calculatedBonuses.push({
+                        type: '⚡ Flash',
+                        description: '2ème meilleur temps de résolution',
+                        points: 3,
+                        entity: entityTimes[1],
+                        reason: `Temps total: ${this.formatMinutes(entityTimes[1].totalTimeMinutes)}`
+                    });
+                }
+
+                // Bonus Sniper (+5 pts) - Moins de tentatives
+                const entityAttempts = entities.map(entity => {
+                    const attempts = data.submissions.filter(s =>
+                        entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id
+                    ).length;
+                    const stats = this.getTeamDetailedStats(entity, data);
+                    return { ...entity, attempts, enigmasSolved: stats.enigmasSolved };
+                }).filter(e => e.enigmasSolved > 0);
+
+                entityAttempts.sort((a, b) => a.attempts - b.attempts);
+
+                if (entityAttempts.length > 0) {
+                    this.calculatedBonuses.push({
+                        type: '🎯 Sniper',
+                        description: 'Moins de tentatives (plus précis)',
+                        points: 5,
+                        entity: entityAttempts[0],
+                        reason: `${entityAttempts[0].attempts} tentatives seulement`
+                    });
+                }
+
+                // Afficher les bonus
+                let html = `
+                    <div style="margin-bottom: 20px;">
+                        <p style="color: #81FE0E; font-weight: bold;">Bonus détectés :</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #343973;">
+                                <th style="padding: 12px; text-align: left; color: #81FE0E;">Bonus</th>
+                                <th style="padding: 12px; text-align: left; color: #81FE0E;">Bénéficiaire</th>
+                                <th style="padding: 12px; text-align: center; color: #81FE0E;">Points</th>
+                                <th style="padding: 12px; text-align: left; color: #81FE0E;">Raison</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                for (const bonus of this.calculatedBonuses) {
+                    html += `
+                        <tr style="border-bottom: 1px solid #333;">
+                            <td style="padding: 12px;">
+                                <strong>${bonus.type}</strong><br>
+                                <span style="color: #888; font-size: 12px;">${bonus.description}</span>
+                            </td>
+                            <td style="padding: 12px;">
+                                ${bonus.entity.name}
+                                <span style="color: #666; font-size: 11px;">${bonus.entity.type === 'Équipe' ? '👥' : '👤'}</span>
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <span style="background: #81FE0E; color: #000; padding: 3px 10px; border-radius: 10px; font-weight: bold;">
+                                    +${bonus.points}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; color: #aaa;">${bonus.reason}</td>
+                        </tr>
+                    `;
+                }
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(129, 254, 14, 0.1); border-radius: 10px; border: 1px solid #81FE0E33;">
+                        <strong style="color: #81FE0E;">Total des bonus à attribuer :</strong>
+                        <span style="float: right; font-size: 20px; font-weight: bold; color: #81FE0E;">
+                            ${this.calculatedBonuses.reduce((sum, b) => sum + b.points, 0)} pts
+                        </span>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+                document.getElementById('applyBonusBtn').disabled = false;
+            },
+
+            async applyBonuses() {
+                if (!confirm('Êtes-vous sûr de vouloir attribuer ces bonus ? Cette action ajoutera les points aux participants.')) {
+                    return;
+                }
+
+                const btn = document.getElementById('applyBonusBtn');
+                btn.disabled = true;
+                btn.textContent = '⏳ Attribution en cours...';
+
+                try {
+                    for (const bonus of this.calculatedBonuses) {
+                        // Mettre à jour les points de tous les membres
+                        for (const playerId of bonus.entity.playerIds) {
+                            const { data: player } = await supabaseClient
+                                .from('players')
+                                .select('points')
+                                .eq('id', playerId)
+                                .single();
+
+                            if (player) {
+                                await supabaseClient
+                                    .from('players')
+                                    .update({ points: (player.points || 0) + bonus.points })
+                                    .eq('id', playerId);
+                            }
+                        }
+                    }
+
+                    showToast('✅ Bonus attribués avec succès !', 'success');
+                    btn.textContent = '✅ Bonus appliqués !';
+                    btn.style.background = '#22c55e';
+
+                    // Rafraîchir le cache
+                    this.statsData = null;
+
+                } catch (error) {
+                    console.error('Error applying bonuses:', error);
+                    showToast('❌ Erreur lors de l\'attribution des bonus', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '✅ Appliquer tous les bonus';
                 }
             },
 
