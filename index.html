@@ -4285,7 +4285,7 @@
                         supabaseClient.from('players').select('id, pseudo, email, team_id, points, is_admin'),
                         supabaseClient.from('teams').select('id, name, points'),
                         supabaseClient.from('enigmas').select('id, number, title, scheduled_at').eq('published', true).order('number'),
-                        supabaseClient.from('enigma_progress').select('player_id, enigma_id, solved_at, qr_scanned, wrong_attempts, started_at'),
+                        supabaseClient.from('enigma_progress').select('player_id, team_id, enigma_id, solved_at, qr_scanned, wrong_attempts, started_at'),
                         supabaseClient.from('submissions').select('id, enigma_id, player_id, team_id, status, created_at')
                     ]);
 
@@ -4297,6 +4297,9 @@
                         progress: progressRes.data?.length,
                         submissions: submissionsRes.data?.length
                     });
+
+                    // Debug: voir les progress avec team_id
+                    console.log('Progress with team_id:', progressRes.data?.filter(p => p.team_id));
 
                     this.statsData = {
                         players: playersRes.data?.filter(p => !p.is_admin && !p.pseudo.toLowerCase().includes('test')) || [],
@@ -4540,41 +4543,30 @@
 
                 for (const entity of entities) {
                     result[entity.key] = data.enigmas.map(enigma => {
-                        // Trouver le temps le plus rapide parmi les membres
                         let bestTime = null;
-                        for (const playerId of entity.playerIds) {
-                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+
+                        // Pour les équipes, chercher par team_id
+                        if (entity.team_id) {
+                            const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
                             if (prog?.solved_at && enigma.scheduled_at) {
-                                const solvedDate = new Date(prog.solved_at);
-                                const scheduledDate = new Date(enigma.scheduled_at);
-                                const time = (solvedDate - scheduledDate) / 60000; // en minutes
-
-                                // Debug pour la première entité
-                                if (entity === entities[0] && enigma === data.enigmas[0]) {
-                                    console.log('Resolution time calc:', {
-                                        entity: entity.name,
-                                        enigma: enigma.number,
-                                        playerId,
-                                        solved_at: prog.solved_at,
-                                        scheduled_at: enigma.scheduled_at,
-                                        time_minutes: time
-                                    });
-                                }
-
-                                if (time > 0 && (bestTime === null || time < bestTime)) {
-                                    bestTime = time;
+                                const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                                if (time > 0) bestTime = time;
+                            }
+                        } else {
+                            // Pour les solos, chercher par player_id
+                            for (const playerId of entity.playerIds) {
+                                const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                                if (prog?.solved_at && enigma.scheduled_at) {
+                                    const time = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                                    if (time > 0 && (bestTime === null || time < bestTime)) {
+                                        bestTime = time;
+                                    }
                                 }
                             }
                         }
                         return bestTime;
                     });
                 }
-
-                // Debug log
-                console.log('Resolution times calculated:', Object.keys(result).map(k => ({
-                    entity: k,
-                    times: result[k]
-                })));
 
                 return result;
             },
@@ -4585,10 +4577,17 @@
                 for (const entity of entities) {
                     result[entity.key] = data.enigmas.map(enigma => {
                         // Compter les soumissions pour cette entité sur cette énigme
-                        return data.submissions.filter(s =>
-                            s.enigma_id === enigma.id &&
-                            (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
-                        ).length;
+                        if (entity.team_id) {
+                            // Pour les équipes, chercher par team_id
+                            return data.submissions.filter(s =>
+                                s.enigma_id === enigma.id && s.team_id === entity.team_id
+                            ).length;
+                        } else {
+                            // Pour les solos, chercher par player_id
+                            return data.submissions.filter(s =>
+                                s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
+                            ).length;
+                        }
                     });
                 }
 
@@ -4681,26 +4680,46 @@
                 let totalAttempts = 0;
 
                 for (const entity of entities) {
-                    // Tentatives
-                    const attempts = data.submissions.filter(s =>
-                        s.enigma_id === enigma.id &&
-                        (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
-                    ).length;
+                    // Tentatives - chercher par team_id ou player_id
+                    let attempts = 0;
+                    if (entity.team_id) {
+                        attempts = data.submissions.filter(s =>
+                            s.enigma_id === enigma.id && s.team_id === entity.team_id
+                        ).length;
+                    } else {
+                        attempts = data.submissions.filter(s =>
+                            s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
+                        ).length;
+                    }
                     totalAttempts += attempts;
 
-                    // Temps de résolution
+                    // Temps de résolution - chercher par team_id ou player_id
                     let time = null;
                     let status = '❌';
-                    for (const playerId of entity.playerIds) {
-                        const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+
+                    if (entity.team_id) {
+                        // Pour les équipes, chercher par team_id
+                        const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
                         if (prog?.solved_at && enigma.scheduled_at) {
                             const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
-                            if (t > 0 && (time === null || t < time)) {
-                                time = t;
-                            }
+                            if (t > 0) time = t;
                             status = prog.qr_scanned ? '✅' : '🔍';
                         } else if (prog?.started_at) {
                             status = '⏳';
+                        }
+                    } else {
+                        // Pour les solos, chercher par player_id
+                        for (const playerId of entity.playerIds) {
+                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (prog?.solved_at && enigma.scheduled_at) {
+                                const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                                if (t > 0 && (time === null || t < time)) {
+                                    time = t;
+                                }
+                                status = prog.qr_scanned ? '✅' : '🔍';
+                            } else if (prog?.started_at && status === '❌') {
+                                status = '⏳';
+                            }
                         }
                     }
 
@@ -4821,10 +4840,17 @@
                 const enigmaDetails = [];
 
                 for (const enigma of data.enigmas) {
-                    const attempts = data.submissions.filter(s =>
-                        s.enigma_id === enigma.id &&
-                        (entity.playerIds.includes(s.player_id) || s.team_id === entity.team_id)
-                    ).length;
+                    // Tentatives - chercher par team_id ou player_id
+                    let attempts = 0;
+                    if (entity.team_id) {
+                        attempts = data.submissions.filter(s =>
+                            s.enigma_id === enigma.id && s.team_id === entity.team_id
+                        ).length;
+                    } else {
+                        attempts = data.submissions.filter(s =>
+                            s.enigma_id === enigma.id && entity.playerIds.includes(s.player_id)
+                        ).length;
+                    }
                     totalAttempts += attempts;
 
                     let time = null;
@@ -4832,18 +4858,33 @@
                     let solved = false;
                     let qr = false;
 
-                    for (const playerId of entity.playerIds) {
-                        const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                    if (entity.team_id) {
+                        // Pour les équipes, chercher par team_id
+                        const prog = data.progress.find(p => p.team_id === entity.team_id && p.enigma_id === enigma.id);
                         if (prog?.solved_at && enigma.scheduled_at) {
                             const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
-                            if (t > 0 && (time === null || t < time)) {
-                                time = t;
-                            }
+                            if (t > 0) time = t;
                             solved = true;
                             if (prog.qr_scanned) qr = true;
                             status = prog.qr_scanned ? '✅' : '🔍';
-                        } else if (prog?.started_at && status === '❌') {
+                        } else if (prog?.started_at) {
                             status = '⏳';
+                        }
+                    } else {
+                        // Pour les solos, chercher par player_id
+                        for (const playerId of entity.playerIds) {
+                            const prog = data.progress.find(p => p.player_id === playerId && p.enigma_id === enigma.id);
+                            if (prog?.solved_at && enigma.scheduled_at) {
+                                const t = (new Date(prog.solved_at) - new Date(enigma.scheduled_at)) / 60000;
+                                if (t > 0 && (time === null || t < time)) {
+                                    time = t;
+                                }
+                                solved = true;
+                                if (prog.qr_scanned) qr = true;
+                                status = prog.qr_scanned ? '✅' : '🔍';
+                            } else if (prog?.started_at && status === '❌') {
+                                status = '⏳';
+                            }
                         }
                     }
 
